@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+package yarf;
+
+message TMSG {
+    required bool binary = 1;
+    optional bytes headers = 2;
+    optional bytes content = 3;
+}
