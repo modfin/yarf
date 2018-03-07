@@ -77,8 +77,8 @@ func (d *DiscoveryDnsA) refresh() {
 	for _, rec := range r.Answer {
 		if a, ok := rec.(*dns.A); ok {
 
-			fmt.Println(" IP", a.A.String())
-			fmt.Println(" Ttl", a.Header().Ttl)
+			//fmt.Println(" IP", a.A.String())
+			//fmt.Println(" Ttl", a.Header().Ttl)
 			ips = append(ips, a.A.String())
 			ttl = a.Header().Ttl
 		}

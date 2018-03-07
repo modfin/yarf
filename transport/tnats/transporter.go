@@ -41,7 +41,6 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 	ctx, _ = context.WithTimeout(ctx, n.timeout)
 
 	function = n.namespace + function
-	time.Now().Format()
 	com := n.fromFunction(function)
 
 	err = com.send(ctx, requestData)

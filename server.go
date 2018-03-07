@@ -15,7 +15,7 @@ func NewServer(t Transporter, namespace ... string) Server {
 	s := Server{}
 	s.transporter = t
 	if len(namespace) > 0 {
-		s.namespace = namespace[0]
+		s.namespace = strings.Join(namespace, ".")
 	} else {
 		s.namespace = ""
 	}
