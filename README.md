@@ -1,7 +1,4 @@
-
-<p align="center">
-<img src="yarf.png" alt="yarf" title="yarf" />
-</p>
+![Yarf](yarf.png "Yarf")
 
 # yarf - Yet Another RPC Framework 
 
