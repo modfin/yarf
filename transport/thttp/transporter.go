@@ -41,7 +41,9 @@ type Client struct {
 func NewHttpTransporter(options Options) (*HttpTransporter, error) {
 	t := HttpTransporter{
 		options: options,
+		mux: http.NewServeMux(),
 	}
+
 
 	return &t, nil
 }
@@ -67,9 +69,7 @@ func (h *HttpTransporter) Call(ctx context.Context, function string, requestData
 	return ioutil.ReadAll(resp.Body)
 }
 
-func (h *HttpTransporter) startServer() {
-
-	h.mux = http.NewServeMux()
+func (h *HttpTransporter) Start() error {
 
 	h.server = &http.Server{
 		Addr:           stringOr(h.options.Server.Addr, ":" + STD_PORT),
@@ -80,14 +80,14 @@ func (h *HttpTransporter) startServer() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	go h.server.ListenAndServe()
+	return h.server.ListenAndServe()
+}
+
+func (h *HttpTransporter) Stop(ctx context.Context) error {
+	return h.server.Shutdown(ctx)
 }
 
 func (h *HttpTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) (err error) {
-
-	h.initServer.Do(func() {
-		h.startServer();
-	})
 
 	h.mux.HandleFunc("/" + function, func(res http.ResponseWriter, req *http.Request) {
 		if req.Method != "POST" {

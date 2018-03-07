@@ -19,8 +19,8 @@ func main(){
 		os.Exit(1)
 	}
 
-
 	simple.StartServer(serverTransport)
+	go serverTransport.Start()
 
 
 	time.Sleep(200 * time.Millisecond)

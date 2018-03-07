@@ -48,9 +48,11 @@ func main(){
     
     server.Handle("add", func(req *yarf.Msg, resp *yarf.Msg) (err error){
     
-        resp.SetParam("res", req.Param("val2").IntOr(0)+req.Param("val2").IntOr(0))
+        resp.SetParam("res", req.Param("val1").IntOr(0)+req.Param("val2").IntOr(0))
         return nil
     })
+    
+    log.Fatal(transport.Start())
 }
 ```
 
