@@ -1,4 +1,8 @@
 
+<p align="center">
+<img src="yarf.png" alt="yarf" title="yarf" />
+</p>
+
 # yarf - Yet Another RPC Framework 
 
 
@@ -15,6 +19,9 @@ Yarf is a rpc framework focusing on ease of use and clear options of how to use.
 
 ## Features
 * Separation between protocol and transport
+* Support for synchronise calls
+* Support for callback functions
+* Support for channel retrieval
  
 
 ## Supported transport layers
