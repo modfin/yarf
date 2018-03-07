@@ -91,6 +91,6 @@ func main(){
 * Testing
 * More Examples
 * Http Transport
-* * Improving service discover on HTTP transport
-* * Improving loadbalancing on HTTP transport
-* * Support for http2 and tls transport
+  * Improving service discover on HTTP transport
+  * Improving loadbalancing on HTTP transport
+  * Support for http2 and tls transport
