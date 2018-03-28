@@ -11,8 +11,26 @@ func RunClinet(clientTransport yarf.Transporter){
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
 
+
+
+
+	fmt.Println("Performing request, cat")
+	res, err := client.Request("a.test.cat").
+		SetParam("arr", []string{"a","b", "c"}).
+		Exec().
+		Get()
+
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	fmt.Println(" Result of a + b + c =", res.Param("res").StringOr("Fail"))
+
+
+
+
 	fmt.Println("Performing request, add")
-	res, err := client.Request("a.test.add").
+	res, err = client.Request("a.test.add").
 		SetParam("val1", 5).
 		SetParam("val2", 7).
 		Exec().

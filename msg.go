@@ -170,6 +170,29 @@ func (m *Param) String() (string, bool) {
 	return str, ok
 }
 
+func (m *Param) StringArr() ([]string, bool) {
+	arr, ok := m.value.([]interface{})
+	var res []string
+	if !ok{
+		return res, ok
+	}
+	res = make([]string, len(arr))
+	for i, val := range arr{
+		res[i], ok = val.(string)
+	}
+	return res, ok
+}
+
+func (m *Param) StringArrOr(def []string) ([]string) {
+	arr, ok := m.StringArr()
+
+	if ok {
+		return arr
+	}
+	return def
+}
+
+
 func (m *Param) StringOr(def string) (string) {
 	str, ok := m.String()
 	if ok {

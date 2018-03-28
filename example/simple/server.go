@@ -41,6 +41,22 @@ func StartServer(serverTransport yarf.Transporter){
 	});
 
 
+	server.Handle("cat", func(req *yarf.Msg, resp *yarf.Msg) (err error){
+
+		fmt.Println(" Got request cat")
+		arr := req.Param("arr").StringArrOr([]string{"No", "Data"})
+
+		res := ""
+		for _, item := range arr{
+			res += item
+		}
+
+		resp.SetParam("res", res)
+
+		return nil
+	});
+
+
 	fmt.Println("Adding sub handler")
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error){
 		fmt.Println(" Got request Sub")
