@@ -147,107 +147,21 @@ func (m *Msg) SetParam(key string, value interface{}) *Msg {
 
 func (m *Msg) Param(key string) *Param {
 	p := Param{key:key}
-	p.value = m.Headers["params"].(map[string]interface{})[key]
+	params := m.Headers["params"]
+
+	if params == nil{
+		return &p
+	}
+
+	pp, ok := params.(map[string]interface{})
+	if !ok {
+		return &p
+	}
+
+	p.value = pp[key]
+
 
 	return &p
-}
-
-type Param struct {
-	key   string
-	value interface{}
-}
-
-func (m *Param) Key() string {
-	return m.key
-}
-
-func (m *Param) Value() interface{} {
-	return m.value
-}
-
-func (m *Param) String() (string, bool) {
-	str, ok := m.value.(string)
-	return str, ok
-}
-
-func (m *Param) StringArr() ([]string, bool) {
-	arr, ok := m.value.([]interface{})
-	var res []string
-	if !ok{
-		return res, ok
-	}
-	res = make([]string, len(arr))
-	for i, val := range arr{
-		res[i], ok = val.(string)
-	}
-	return res, ok
-}
-
-func (m *Param) StringArrOr(def []string) ([]string) {
-	arr, ok := m.StringArr()
-
-	if ok {
-		return arr
-	}
-	return def
-}
-
-
-func (m *Param) StringOr(def string) (string) {
-	str, ok := m.String()
-	if ok {
-		return str
-	}
-	return def
-}
-
-func (m *Param) Int() (int64, bool) {
-	var i int64
-	var f float64
-	ok := false
-
-	switch m.value.(type) {
-	case int64:
-		i, ok = m.value.(int64)
-	case float64:
-		f, ok = m.value.(float64)
-		i = int64(f)
-	}
-
-	return i, ok
-}
-
-func (m *Param) IntOr(def int64) (int64) {
-	i, ok := m.Int()
-	if ok {
-		return i
-	}
-	return def
-}
-
-func (m *Param) Float() (float64, bool) {
-	i, ok := m.value.(float64)
-	return i, ok
-}
-
-func (m *Param) FloatOr(def float64) (float64) {
-	i, ok := m.Float()
-	if ok {
-		return i
-	}
-	return def
-}
-
-func (m *Param) Bool() (bool, bool) {
-	i, ok := m.value.(bool)
-	return i, ok
-}
-func (m *Param) BoolOr(def bool) (bool) {
-	i, ok := m.Bool()
-	if ok {
-		return i
-	}
-	return def
 }
 
 
