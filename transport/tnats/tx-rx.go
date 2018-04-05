@@ -40,7 +40,7 @@ func (t *txrx) send(ctx context.Context, data []byte) (err error) {
 	}
 
 	if int(t.transporter.client.MaxPayload()) < len(data) {
-		t.tx, t.rx, err = t.transporter.requestUpgrade(t.function);
+		t.tx, t.rx, err = t.transporter.requestUpgrade(t.function)
 		t.upgraded = true
 		if err != nil {
 			return err
@@ -63,8 +63,8 @@ func (t *txrx) receive(ctx context.Context) (data []byte, err error) {
 		return t.transporter.receiveMultipart(t.rx)
 	}
 
-	if (len(t.message.Data) > 8 && string(t.message.Data[:7]) == "UPGRADE") {
-		t.tx, t.rx, err = t.transporter.acceptUpgrade(t.message);
+	if len(t.message.Data) > 8 && string(t.message.Data[:7]) == "UPGRADE" {
+		t.tx, t.rx, err = t.transporter.acceptUpgrade(t.message)
 		t.upgraded = true
 		if err != nil {
 			return nil, err

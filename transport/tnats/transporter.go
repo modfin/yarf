@@ -5,6 +5,7 @@ import (
 	"github.com/nats-io/go-nats"
 	"time"
 	"fmt"
+	"errors"
 )
 
 type NatsTransporter struct {
@@ -28,9 +29,20 @@ func NewNatsTransporter(servers string, timeout time.Duration, opts ... nats.Opt
 	if err != nil {
 		return nil, err
 	}
-
 	t.client = nc
 
+	return &t, nil
+}
+
+func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration) (*NatsTransporter, error) {
+	t := NatsTransporter{
+		namespace: "yarf.",
+		timeout: timeout,
+		client: natsConnection,
+	}
+	if !natsConnection.IsConnected() && !natsConnection.IsReconnecting() {
+		return nil, errors.New("existing nats connection unusable")
+	}
 	return &t, nil
 }
 
@@ -66,7 +78,7 @@ func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte
 			return
 		}
 
-		responseData := toExec(requestData);
+		responseData := toExec(requestData)
 
 
 		err = com.send(context.Background(), responseData)
