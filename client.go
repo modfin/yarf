@@ -25,32 +25,32 @@ func (c *Client) Call(function string, req interface{}, resp interface{}) error 
 
 func (c *Client) Request(function string) *RPC {
 	return &RPC{
-		client: c,
-		function: function,
-		requestMsg: &Msg{},
+		client:      c,
+		function:    function,
+		requestMsg:  &Msg{},
 		responseMsg: &Msg{},
-		done: make(chan bool),
+		done:        make(chan bool),
 	}
 }
 
 type RPC struct {
-	client             *Client
-	function           string
-	context            context.Context
+	client   *Client
+	function string
+	context  context.Context
 
 	requestMsg         *Msg
 	responseMsg        *Msg
 	responseMsgContent interface{}
 
-	callback           func(*Msg)
-	errorCallback      func(error)
+	callback      func(*Msg)
+	errorCallback func(error)
 
-	channel            chan (*Msg)
-	errorChannel       chan (error)
+	channel      chan (*Msg)
+	errorChannel chan (error)
 
-	err                error
-	done               chan (bool)
-	isDone             bool
+	err    error
+	done   chan (bool)
+	isDone bool
 }
 
 func (r *RPC) Content(requestData interface{}) *RPC {
@@ -182,4 +182,3 @@ func (r *RPC) Done() error {
 func (r *RPC) Error() error {
 	return r.err
 }
-

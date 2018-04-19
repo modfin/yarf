@@ -1,12 +1,12 @@
 package thttp
 
 import (
-	"net"
-	"github.com/miekg/dns"
 	"fmt"
+	"github.com/miekg/dns"
+	"math/rand"
+	"net"
 	"sync"
 	"time"
-	"math/rand"
 )
 
 type Discovery interface {
@@ -28,12 +28,12 @@ type DiscoveryDnsA struct {
 	Host     string
 	Port     string
 
-	Resolv   string
+	Resolv string
 
-	lock     sync.Mutex
-	pos      int
-	ips      []string
-	expires  int64
+	lock    sync.Mutex
+	pos     int
+	ips     []string
+	expires int64
 }
 
 func (d *DiscoveryDnsA) refresh() {
@@ -93,11 +93,9 @@ func (d *DiscoveryDnsA) refresh() {
 
 func (d *DiscoveryDnsA) Url() (string, error) {
 
-	if len(d.ips) == 0 || time.Now().Unix() > d.expires{
+	if len(d.ips) == 0 || time.Now().Unix() > d.expires {
 		d.refresh()
 	}
 
-
 	return stringOr(d.Protocol, STD_PROTOCOL) + "://" + d.ips[rand.Intn(len(d.ips))] + ":" + stringOr(d.Port, STD_PORT), nil
 }
-

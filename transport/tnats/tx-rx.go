@@ -1,35 +1,35 @@
 package tnats
 
 import (
-	"github.com/nats-io/go-nats"
 	"context"
+	"github.com/nats-io/go-nats"
 )
 
 type txrx struct {
 	transporter *NatsTransporter
 	upgraded    bool
 
-	function    string
-	message     *nats.Msg
+	function string
+	message  *nats.Msg
 
-	tx          string
-	rx          string
+	tx string
+	rx string
 }
 
 func (n *NatsTransporter) fromFunction(function string) txrx {
 	return txrx{
 		transporter: n,
-		upgraded: false,
-		function: function,
+		upgraded:    false,
+		function:    function,
 	}
 }
 
 func (n *NatsTransporter) fromMessage(message *nats.Msg) txrx {
 	return txrx{
 		transporter: n,
-		upgraded: false,
-		function: message.Reply,
-		message: message,
+		upgraded:    false,
+		function:    message.Reply,
+		message:     message,
 	}
 }
 
@@ -74,6 +74,3 @@ func (t *txrx) receive(ctx context.Context) (data []byte, err error) {
 
 	return t.message.Data, nil
 }
-
-
-

@@ -2,8 +2,8 @@ package yarf
 
 import (
 	"encoding/json"
-	"github.com/gogo/protobuf/proto"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 )
 
 var STATUS_OK int = 200
@@ -36,7 +36,7 @@ func (m *Msg) Marshal() (data []byte, err error) {
 	}
 
 	tmsg := &TMSG{
-		Binary: &m.Binary,
+		Binary:  &m.Binary,
 		Headers: headerBytes,
 		Content: contentBytes,
 	}
@@ -121,13 +121,13 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 	return m
 }
 
-func (m *Msg) SetContent(content interface{}) (*Msg) {
+func (m *Msg) SetContent(content interface{}) *Msg {
 	m.Content, _ = json.Marshal(content)
 	m.Binary = false
 	return m
 }
 
-func (m *Msg) SetBinaryContent(content []byte) (*Msg) {
+func (m *Msg) SetBinaryContent(content []byte) *Msg {
 	m.Content = content
 	m.Binary = true
 	return m
@@ -146,10 +146,10 @@ func (m *Msg) SetParam(key string, value interface{}) *Msg {
 }
 
 func (m *Msg) Param(key string) *Param {
-	p := Param{key:key}
+	p := Param{key: key}
 	params := m.Headers["params"]
 
-	if params == nil{
+	if params == nil {
 		return &p
 	}
 
@@ -160,12 +160,5 @@ func (m *Msg) Param(key string) *Param {
 
 	p.value = pp[key]
 
-
 	return &p
 }
-
-
-
-
-
-

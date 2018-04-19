@@ -2,10 +2,10 @@ package tnats
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/nats-io/go-nats"
 	"time"
-	"fmt"
-	"errors"
 )
 
 type NatsTransporter struct {
@@ -13,16 +13,16 @@ type NatsTransporter struct {
 	servers   string
 	opts      []nats.Option
 
-	timeout   time.Duration
-	client    *nats.Conn
+	timeout time.Duration
+	client  *nats.Conn
 }
 
-func NewNatsTransporter(servers string, timeout time.Duration, opts ... nats.Option) (*NatsTransporter, error) {
+func NewNatsTransporter(servers string, timeout time.Duration, opts ...nats.Option) (*NatsTransporter, error) {
 	t := NatsTransporter{
 		namespace: "yarf.",
-		servers: servers,
-		timeout: timeout,
-		opts: opts,
+		servers:   servers,
+		timeout:   timeout,
+		opts:      opts,
 	}
 
 	nc, err := nats.Connect(servers, opts...)
@@ -37,15 +37,14 @@ func NewNatsTransporter(servers string, timeout time.Duration, opts ... nats.Opt
 func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration) (*NatsTransporter, error) {
 	t := NatsTransporter{
 		namespace: "yarf.",
-		timeout: timeout,
-		client: natsConnection,
+		timeout:   timeout,
+		client:    natsConnection,
 	}
 	if !natsConnection.IsConnected() && !natsConnection.IsReconnecting() {
 		return nil, errors.New("existing nats connection unusable")
 	}
 	return &t, nil
 }
-
 
 // TODO implement optional compression.
 
@@ -80,7 +79,6 @@ func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte
 
 		responseData := toExec(requestData)
 
-
 		err = com.send(context.Background(), responseData)
 		if err != nil {
 			fmt.Println("Could not send ", err)
@@ -91,7 +89,3 @@ func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte
 
 	return err
 }
-
-
-
-

@@ -1,9 +1,9 @@
 package yarf
 
 import (
-	"strings"
 	"reflect"
 	"runtime"
+	"strings"
 )
 
 type Server struct {
@@ -11,7 +11,7 @@ type Server struct {
 	namespace   string
 }
 
-func NewServer(t Transporter, namespace ... string) Server {
+func NewServer(t Transporter, namespace ...string) Server {
 	s := Server{}
 	s.transporter = t
 	if len(namespace) > 0 {
@@ -22,7 +22,7 @@ func NewServer(t Transporter, namespace ... string) Server {
 	return s
 }
 
-func toServerError(status int, response *Msg, errors ... string) (responseData []byte) {
+func toServerError(status int, response *Msg, errors ...string) (responseData []byte) {
 
 	response.SetStatus(status)
 	response.SetContent(NewRPCError(status, strings.Join(errors, ";")))
@@ -32,7 +32,7 @@ func toServerError(status int, response *Msg, errors ... string) (responseData [
 
 func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error) {
 	parts := strings.Split(runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), ".")
-	function := parts[len(parts) - 1]
+	function := parts[len(parts)-1]
 	s.Handle(function, handler)
 }
 
@@ -67,6 +67,3 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 		return responseData
 	})
 }
-
-
-

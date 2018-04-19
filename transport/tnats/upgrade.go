@@ -1,16 +1,15 @@
 package tnats
 
 import (
-	"github.com/nats-io/go-nats"
-	"strings"
-	"fmt"
-	"github.com/satori/go.uuid"
 	"context"
 	"errors"
+	"fmt"
+	"github.com/nats-io/go-nats"
+	"github.com/satori/go.uuid"
+	"strings"
 )
 
-
-const  HeaderSize = 4 * 5
+const HeaderSize = 4 * 5
 
 func (n *NatsTransporter) acceptUpgrade(m *nats.Msg) (tx string, rx string, err error) {
 
@@ -64,7 +63,7 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 	var payloadSize = int(n.client.MaxPayload())
 	var totalLen = len(data)
 	contentLen := payloadSize - HeaderSize
-	frames := totalLen / contentLen + 1
+	frames := totalLen/contentLen + 1
 
 	waitChan := make(chan bool)
 	errorChan := make(chan error)
@@ -72,7 +71,7 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 	for frame := 0; frame < frames; frame++ {
 
 		start := frame * contentLen
-		end := min(start + contentLen, totalLen)
+		end := min(start+contentLen, totalLen)
 
 		headers := make([]byte, 0, HeaderSize)
 		headers = append(headers, intToBytes(totalLen)...)
@@ -84,7 +83,7 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 		go func() {
 			err = n.client.Publish(
 				channel,
-				append(headers, data[start : end]...))
+				append(headers, data[start:end]...))
 			if err != nil {
 				errorChan <- err
 			} else {
@@ -127,7 +126,6 @@ func (n *NatsTransporter) receiveMultipart(channel string) (data []byte, err err
 		return
 	}
 
-
 	waitChan := make(chan bool, 2)
 	errorsChan := make(chan error)
 
@@ -145,12 +143,11 @@ func (n *NatsTransporter) receiveMultipart(channel string) (data []byte, err err
 			partial := msg.Data
 
 			// Extracting headers
-			totalLen := bytesToInt(partial[0 * 4 : 0 * 4 + 4])// append(headers, intToBytes(totalLen)...)
-			start := bytesToInt(partial[1 * 4 : 1 * 4 + 4]) //append(headers, intToBytes(start)...)
-			end := bytesToInt(partial[2 * 4 : 2 * 4 + 4])//append(headers, intToBytes(end)...)
+			totalLen := bytesToInt(partial[0*4 : 0*4+4]) // append(headers, intToBytes(totalLen)...)
+			start := bytesToInt(partial[1*4 : 1*4+4])    //append(headers, intToBytes(start)...)
+			end := bytesToInt(partial[2*4 : 2*4+4])      //append(headers, intToBytes(end)...)
 			//frame := bytesToInt(partial[3 * 4 : 3 * 4 + 4])//append(headers, intToBytes(frame)...)
-			framesHeader := bytesToInt(partial[4 * 4 : 4 * 4 + 4])//append(headers, intToBytes(frames)...)
-
+			framesHeader := bytesToInt(partial[4*4 : 4*4+4]) //append(headers, intToBytes(frames)...)
 
 			if data == nil {
 				data = make([]byte, totalLen)
