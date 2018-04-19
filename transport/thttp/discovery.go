@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"github.com/golang-plus/errors"
 )
 
 type Discovery interface {
@@ -72,7 +73,7 @@ func (d *DiscoveryDnsA) refresh() {
 		return
 	}
 	// Stuff must be in the answer section
-	ips := []string{}
+	var ips []string
 	var ttl uint32
 	for _, rec := range r.Answer {
 		if a, ok := rec.(*dns.A); ok {
@@ -85,6 +86,7 @@ func (d *DiscoveryDnsA) refresh() {
 	}
 
 	if len(ips) > 0 {
+		fmt.Println("Setting", ips, len(ips))
 		d.ips = ips
 		d.expires = time.Now().Unix() + int64(ttl)
 	}
@@ -94,7 +96,12 @@ func (d *DiscoveryDnsA) refresh() {
 func (d *DiscoveryDnsA) Url() (string, error) {
 
 	if len(d.ips) == 0 || time.Now().Unix() > d.expires {
+		//fmt.Println("Refreshing", d.ips)
 		d.refresh()
+	}
+
+	if len(d.ips) == 0 {
+		return "", errors.New("could not resolve ip for url")
 	}
 
 	return stringOr(d.Protocol, STD_PROTOCOL) + "://" + d.ips[rand.Intn(len(d.ips))] + ":" + stringOr(d.Port, STD_PORT), nil

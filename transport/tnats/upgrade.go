@@ -45,7 +45,8 @@ func (n *NatsTransporter) requestUpgrade(function string) (tx string, rx string,
 	tx = uv4s + "-req"
 	rx = uv4s + "-resp"
 
-	ctx, _ := context.WithTimeout(context.Background(), n.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
 	msg, err := n.client.RequestWithContext(ctx, function, []byte(upgradeRequest))
 	if err != nil {
 		return tx, rx, err

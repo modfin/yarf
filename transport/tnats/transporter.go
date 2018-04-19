@@ -49,7 +49,8 @@ func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration
 // TODO implement optional compression.
 
 func (n *NatsTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
-	ctx, _ = context.WithTimeout(ctx, n.timeout)
+	ctx, cancel := context.WithTimeout(ctx, n.timeout)
+	defer cancel()
 
 	function = n.namespace + function
 	com := n.fromFunction(function)
@@ -60,6 +61,7 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 	}
 
 	response, err = com.receive(ctx)
+
 
 	return
 }

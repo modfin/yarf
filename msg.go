@@ -6,9 +6,13 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-var STATUS_OK int = 200
-var STATUS_INTERNAL_ERROR int = 500
+// StatusOk rpc status ok
+const StatusOk int = 200
 
+// StatusInternalError rpc status internal server error
+const StatusInternalError int = 500
+
+// Msg represents a message that is being passed between client and server
 type Msg struct {
 	Headers map[string]interface{}
 
@@ -16,6 +20,7 @@ type Msg struct {
 	Content json.RawMessage
 }
 
+// Marshal marshals a Msg struct to its binary representation
 func (m *Msg) Marshal() (data []byte, err error) {
 
 	defer func() {
@@ -52,6 +57,7 @@ func (m *Msg) Marshal() (data []byte, err error) {
 
 }
 
+// Unmarshal unmarshal binary data to current Msg struct
 func (m *Msg) Unmarshal(data []byte) (err error) {
 
 	defer func() {
@@ -105,11 +111,11 @@ func (m *Msg) SetStatus(code int) *Msg {
 }
 
 func (m *Msg) Ok() *Msg {
-	return m.SetStatus(STATUS_OK)
+	return m.SetStatus(StatusOk)
 }
 
 func (m *Msg) InternalError() *Msg {
-	return m.SetStatus(STATUS_INTERNAL_ERROR)
+	return m.SetStatus(StatusInternalError)
 }
 
 func (m *Msg) SetHeader(key string, value interface{}) *Msg {
