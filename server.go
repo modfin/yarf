@@ -32,7 +32,6 @@ func toServerError(status int, response *Msg, errors ...string) (responseData []
 	return responseData
 }
 
-
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"
 // e.g. my-namespace.Add, if a function named Add is passed into the function
 func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error) {

@@ -1,18 +1,22 @@
 package yarf
 
+//Param is a key/value entry and a struct which implements helper methods to help with retrial of data types from value.
 type Param struct {
 	key   string
 	value interface{}
 }
 
+// Key returns the key of the key/value pair
 func (m *Param) Key() string {
 	return m.key
 }
 
+// Value returns the value of the key/value pair
 func (m *Param) Value() interface{} {
 	return m.value
 }
 
+// String returns value as a string, if possible
 func (m *Param) String() (string, bool) {
 	if m.value == nil {
 		return "", false
@@ -22,14 +26,16 @@ func (m *Param) String() (string, bool) {
 	return str, ok
 }
 
-func (m *Param) StringOr(def string) string {
+// StringOr returns value as a string, otherwise the provided default
+func (m *Param) StringOr(defaultTo string) string {
 	str, ok := m.String()
 	if ok {
 		return str
 	}
-	return def
+	return defaultTo
 }
 
+// StringArr returns value as a []string, if possible
 func (m *Param) StringArr() ([]string, bool) {
 	if m.value == nil {
 		return nil, false
@@ -51,15 +57,17 @@ func (m *Param) StringArr() ([]string, bool) {
 	return res, ok
 }
 
-func (m *Param) StringArrOr(def []string) []string {
+// StringArrOr returns value as a []string, otherwise the provided default
+func (m *Param) StringArrOr(defaultTo []string) []string {
 	arr, ok := m.StringArr()
 
 	if ok {
 		return arr
 	}
-	return def
+	return defaultTo
 }
 
+// Int returns value as a int64, if possible
 func (m *Param) Int() (int64, bool) {
 
 	if m.value == nil {
@@ -81,6 +89,7 @@ func (m *Param) Int() (int64, bool) {
 	return i, ok
 }
 
+// IntOr returns value as a int64, otherwise the provided default
 func (m *Param) IntOr(def int64) int64 {
 	i, ok := m.Int()
 	if ok {
@@ -89,6 +98,7 @@ func (m *Param) IntOr(def int64) int64 {
 	return def
 }
 
+// IntArr returns value as a []int64, if possible
 func (m *Param) IntArr() ([]int64, bool) {
 	if m.value == nil {
 		return nil, false
@@ -110,6 +120,7 @@ func (m *Param) IntArr() ([]int64, bool) {
 	return res, ok
 }
 
+// IntArrOr returns value as a []int64, otherwise the provided default
 func (m *Param) IntArrOr(def []int64) []int64 {
 	arr, ok := m.IntArr()
 
@@ -119,6 +130,7 @@ func (m *Param) IntArrOr(def []int64) []int64 {
 	return def
 }
 
+// Float returns value as a float64, if possible
 func (m *Param) Float() (float64, bool) {
 	if m.value == nil {
 		return 0.0, false
@@ -128,6 +140,7 @@ func (m *Param) Float() (float64, bool) {
 	return i, ok
 }
 
+// FloatOr returns value as a float64, otherwise the provided default
 func (m *Param) FloatOr(def float64) float64 {
 	i, ok := m.Float()
 	if ok {
@@ -136,6 +149,7 @@ func (m *Param) FloatOr(def float64) float64 {
 	return def
 }
 
+// FloatArr returns value as a []float64, if possible
 func (m *Param) FloatArr() ([]float64, bool) {
 	if m.value == nil {
 		return nil, false
@@ -157,6 +171,7 @@ func (m *Param) FloatArr() ([]float64, bool) {
 	return res, ok
 }
 
+// FloatArrOr returns value as a []float64, otherwise the provided default
 func (m *Param) FloatArrOr(def []float64) []float64 {
 	arr, ok := m.FloatArr()
 
@@ -166,6 +181,7 @@ func (m *Param) FloatArrOr(def []float64) []float64 {
 	return def
 }
 
+// Bool returns value as a bool, if possible
 func (m *Param) Bool() (bool, bool) {
 	if m.value == nil {
 		return false, false
@@ -174,6 +190,8 @@ func (m *Param) Bool() (bool, bool) {
 	i, ok := m.value.(bool)
 	return i, ok
 }
+
+// BoolOr returns value as a bool, otherwise the provided default
 func (m *Param) BoolOr(def bool) bool {
 	i, ok := m.Bool()
 	if ok {
@@ -182,6 +200,7 @@ func (m *Param) BoolOr(def bool) bool {
 	return def
 }
 
+// BoolArr returns value as a []bool, if possible
 func (m *Param) BoolArr() ([]bool, bool) {
 	if m.value == nil {
 		return nil, false
@@ -203,6 +222,7 @@ func (m *Param) BoolArr() ([]bool, bool) {
 	return res, ok
 }
 
+// BoolArrOr returns value as a []bool, otherwise the provided default
 func (m *Param) BoolArrOr(def []bool) []bool {
 	arr, ok := m.BoolArr()
 

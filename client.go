@@ -17,7 +17,6 @@ type Client struct {
 	transporter Transporter
 }
 
-
 // Call performs a request from function name, and req param. The response is unmarshaled to resp
 func (c *Client) Call(function string, req interface{}, resp interface{}) error {
 	return c.Request(function).
@@ -90,7 +89,6 @@ func (r *RPC) SetChannel(channel chan (*Msg), errorChannel chan (error)) *RPC {
 	r.errorChannel = errorChannel
 	return r
 }
-
 
 // MkChannel creates channels that can be used if external onec is not required
 func (r *RPC) MkChannel() *RPC {

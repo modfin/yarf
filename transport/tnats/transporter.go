@@ -62,7 +62,6 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 
 	response, err = com.receive(ctx)
 
-
 	return
 }
 

@@ -2,12 +2,12 @@ package thttp
 
 import (
 	"fmt"
+	"github.com/golang-plus/errors"
 	"github.com/miekg/dns"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
-	"github.com/golang-plus/errors"
 )
 
 type Discovery interface {

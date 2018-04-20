@@ -90,6 +90,7 @@ func (m *Msg) Unmarshal(data []byte) (err error) {
 
 }
 
+// Bind is userd to unmarshal/bind contetnt data to input interface
 func (m *Msg) Bind(content interface{}) (err error) {
 
 	err = json.Unmarshal(m.Content, &content)
@@ -100,24 +101,29 @@ func (m *Msg) Bind(content interface{}) (err error) {
 	return nil
 }
 
+// Status returns the status header of the request, if one exist
 func (m *Msg) Status() (status int, ok bool) {
 	status, ok = m.Headers["status"].(int)
 	return
 }
 
+// SetStatus sets the statues header of the message
 func (m *Msg) SetStatus(code int) *Msg {
 	m.SetHeader("status", code)
 	return m
 }
 
+// Ok sets the status header to 200
 func (m *Msg) Ok() *Msg {
 	return m.SetStatus(StatusOk)
 }
 
+// InternalError sets the status header to 500
 func (m *Msg) InternalError() *Msg {
 	return m.SetStatus(StatusInternalError)
 }
 
+// SetHeader sets a generic header of the message
 func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 	if m.Headers == nil {
 		m.Headers = map[string]interface{}{}
@@ -127,18 +133,21 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 	return m
 }
 
+// SetContent sets the input interface as the content of the message
 func (m *Msg) SetContent(content interface{}) *Msg {
 	m.Content, _ = json.Marshal(content)
 	m.Binary = false
 	return m
 }
 
+// SetBinaryContent sets the input data as content of the message
 func (m *Msg) SetBinaryContent(content []byte) *Msg {
 	m.Content = content
 	m.Binary = true
 	return m
 }
 
+// SetParam sets a param in the params header of the message. Which later provides helper methods of de/serializations and defaults.
 func (m *Msg) SetParam(key string, value interface{}) *Msg {
 	if m.Headers == nil {
 		m.Headers = map[string]interface{}{}
@@ -151,6 +160,7 @@ func (m *Msg) SetParam(key string, value interface{}) *Msg {
 	return m
 }
 
+//Param receives a param from the params header, it is wrapped in a param struct which implements helper methods in how to access params.
 func (m *Msg) Param(key string) *Param {
 	p := Param{key: key}
 	params := m.Headers["params"]
