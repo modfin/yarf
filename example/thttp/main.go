@@ -11,7 +11,7 @@ import (
 func main() {
 
 	fmt.Println("Creating server transport")
-	serverTransport, err := thttp.NewHttpTransporter(thttp.Options{})
+	serverTransport, err := thttp.NewHTTPTransporter(thttp.Options{})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -22,12 +22,12 @@ func main() {
 
 	time.Sleep(200 * time.Millisecond)
 
-	clientTransport, err := thttp.NewHttpTransporter(thttp.Options{Discovery: &thttp.DiscoveryDnsA{Host: "localhost"}})
+	clientTransport, err := thttp.NewHTTPTransporter(thttp.Options{Discovery: &thttp.DiscoveryDNSA{Host: "localhost"}})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	simple.RunClinet(clientTransport)
+	simple.RunClient(clientTransport)
 
 }

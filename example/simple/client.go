@@ -6,7 +6,8 @@ import (
 	"log"
 )
 
-func RunClinet(clientTransport yarf.Transporter) {
+// RunClient uses provided transport interface to run some tests
+func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
@@ -38,7 +39,7 @@ func RunClinet(clientTransport yarf.Transporter) {
 
 	fmt.Println("Performing request, sub")
 	res, err = client.Request("a.test.sub").
-		Content(Tuple{32, 11}).
+		Content(tuple{32, 11}).
 		Exec().
 		Get()
 

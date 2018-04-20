@@ -11,11 +11,15 @@ import (
 )
 
 const (
-	STD_PORT     string = "23456"
-	STD_PROTOCOL string = "http"
+	//StdPort defines the standard port for thttp yarf
+	StdPort string = "23456"
+
+	//StdProtocol defines the standard protocol for thttp yarf
+	StdProtocol string = "http"
 )
 
-type HttpTransporter struct {
+// HTTPTransporter implements the yarf.Transport for using http as a transport protocol
+type HTTPTransporter struct {
 	options   Options
 	functions map[string]func(requestData []byte) (responseData []byte)
 
@@ -24,22 +28,28 @@ type HttpTransporter struct {
 	mux        *http.ServeMux
 }
 
+// Options defines the options used by the http yarf transport
 type Options struct {
 	Server    Server
 	Client    Client
 	Discovery Discovery
 }
+
+// Server defines the server config used
 type Server struct {
 	Addr      string
 	TLSConfig *tls.Config
 	timeout   time.Duration
 }
+
+// Client defines the server config used
 type Client struct {
 	Timeout time.Duration
 }
 
-func NewHttpTransporter(options Options) (*HttpTransporter, error) {
-	t := HttpTransporter{
+// NewHTTPTransporter a constructor for the HTTPTransporter
+func NewHTTPTransporter(options Options) (*HTTPTransporter, error) {
+	t := HTTPTransporter{
 		options: options,
 		mux:     http.NewServeMux(),
 	}
@@ -47,10 +57,11 @@ func NewHttpTransporter(options Options) (*HttpTransporter, error) {
 	return &t, nil
 }
 
-func (h *HttpTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
+// Call implements client side call of transporter
+func (h *HTTPTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
 	//ctx, _ = context.WithTimeout(ctx, durationOr(h.options.Client.Timeout, 10 * time.Second))
 
-	url, err := h.options.Discovery.Url()
+	url, err := h.options.Discovery.URL()
 
 	if err != nil {
 		return nil, err
@@ -66,10 +77,11 @@ func (h *HttpTransporter) Call(ctx context.Context, function string, requestData
 	return ioutil.ReadAll(resp.Body)
 }
 
-func (h *HttpTransporter) Start() error {
+// Start initiates the http server to receive requests
+func (h *HTTPTransporter) Start() error {
 
 	h.server = &http.Server{
-		Addr:           stringOr(h.options.Server.Addr, ":"+STD_PORT),
+		Addr:           stringOr(h.options.Server.Addr, ":"+StdPort),
 		TLSConfig:      h.options.Server.TLSConfig,
 		Handler:        h.mux,
 		ReadTimeout:    durationOr(h.options.Server.timeout, 10*time.Second),
@@ -80,11 +92,13 @@ func (h *HttpTransporter) Start() error {
 	return h.server.ListenAndServe()
 }
 
-func (h *HttpTransporter) Stop(ctx context.Context) error {
+// Stop halts the http server to receive requests
+func (h *HTTPTransporter) Stop(ctx context.Context) error {
 	return h.server.Shutdown(ctx)
 }
 
-func (h *HttpTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) (err error) {
+// Listen defines the function that will handle yarf requests
+func (h *HTTPTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) (err error) {
 
 	h.mux.HandleFunc("/"+function, func(res http.ResponseWriter, req *http.Request) {
 		if req.Method != "POST" {

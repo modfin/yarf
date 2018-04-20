@@ -28,6 +28,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	simple.RunClinet(clientTransport)
+	simple.RunClient(clientTransport)
 
 }

@@ -10,21 +10,25 @@ import (
 	"time"
 )
 
+// Discovery defines the interface needed to support http discovery
 type Discovery interface {
-	Url() (string, error)
+	URL() (string, error)
 }
 
+// DiscoveryDefault defines the default discovery using the provided host name
 type DiscoveryDefault struct {
 	Protocol string
 	Host     string
 	Port     string
 }
 
-func (d *DiscoveryDefault) Url() (string, error) {
-	return stringOr(d.Protocol, STD_PROTOCOL) + "://" + d.Host + ":" + stringOr(d.Port, STD_PORT), nil
+// URL implements the Discovery interface
+func (d *DiscoveryDefault) URL() (string, error) {
+	return stringOr(d.Protocol, StdProtocol) + "://" + d.Host + ":" + stringOr(d.Port, StdPort), nil
 }
 
-type DiscoveryDnsA struct {
+// DiscoveryDNSA defines a discover using dns A records to round robin
+type DiscoveryDNSA struct {
 	Protocol string
 	Host     string
 	Port     string
@@ -37,7 +41,7 @@ type DiscoveryDnsA struct {
 	expires int64
 }
 
-func (d *DiscoveryDnsA) refresh() {
+func (d *DiscoveryDNSA) refresh() {
 
 	d.lock.Lock()
 	defer func() {
@@ -93,7 +97,8 @@ func (d *DiscoveryDnsA) refresh() {
 
 }
 
-func (d *DiscoveryDnsA) Url() (string, error) {
+// URL implements the Discovery interface
+func (d *DiscoveryDNSA) URL() (string, error) {
 
 	if len(d.ips) == 0 || time.Now().Unix() > d.expires {
 		//fmt.Println("Refreshing", d.ips)
@@ -104,5 +109,5 @@ func (d *DiscoveryDnsA) Url() (string, error) {
 		return "", errors.New("could not resolve ip for url")
 	}
 
-	return stringOr(d.Protocol, STD_PROTOCOL) + "://" + d.ips[rand.Intn(len(d.ips))] + ":" + stringOr(d.Port, STD_PORT), nil
+	return stringOr(d.Protocol, StdProtocol) + "://" + d.ips[rand.Intn(len(d.ips))] + ":" + stringOr(d.Port, StdPort), nil
 }

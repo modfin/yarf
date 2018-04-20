@@ -6,11 +6,12 @@ import (
 	"fmt"
 )
 
-type Tuple struct {
+type tuple struct {
 	Val1 int
 	Val2 int
 }
 
+// StartServer starts a test server using provided yarf transport
 func StartServer(serverTransport yarf.Transporter) {
 
 	fmt.Println("Creating server")
@@ -56,7 +57,7 @@ func StartServer(serverTransport yarf.Transporter) {
 	fmt.Println("Adding sub handler")
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
 		fmt.Println(" Got request Sub")
-		var t Tuple
+		var t tuple
 		err = req.Bind(&t)
 		if err != nil {
 			return errors.New("could not bind to model")

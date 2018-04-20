@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// NatsTransporter implements the yarf.Transport for using Nats
 type NatsTransporter struct {
 	namespace string
 	servers   string
@@ -17,6 +18,7 @@ type NatsTransporter struct {
 	client  *nats.Conn
 }
 
+// NewNatsTransporter a constructor for the NatsTransporter
 func NewNatsTransporter(servers string, timeout time.Duration, opts ...nats.Option) (*NatsTransporter, error) {
 	t := NatsTransporter{
 		namespace: "yarf.",
@@ -34,6 +36,7 @@ func NewNatsTransporter(servers string, timeout time.Duration, opts ...nats.Opti
 	return &t, nil
 }
 
+// NewNatsTransporterFromConn a constructor for the NatsTransporter using an existing nats connection
 func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration) (*NatsTransporter, error) {
 	t := NatsTransporter{
 		namespace: "yarf.",
@@ -46,8 +49,7 @@ func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration
 	return &t, nil
 }
 
-// TODO implement optional compression.
-
+// Call implements client side call of transporter
 func (n *NatsTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
 	ctx, cancel := context.WithTimeout(ctx, n.timeout)
 	defer cancel()
@@ -65,6 +67,7 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 	return
 }
 
+// Listen defines the function that will handle yarf requests
 func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) error {
 
 	function = n.namespace + function

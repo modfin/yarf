@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const HeaderSize = 4 * 5
+const headerSize = 4 * 5
 
 func (n *NatsTransporter) acceptUpgrade(m *nats.Msg) (tx string, rx string, err error) {
 
@@ -63,7 +63,7 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 
 	var payloadSize = int(n.client.MaxPayload())
 	var totalLen = len(data)
-	contentLen := payloadSize - HeaderSize
+	contentLen := payloadSize - headerSize
 	frames := totalLen/contentLen + 1
 
 	waitChan := make(chan bool)
@@ -74,7 +74,7 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 		start := frame * contentLen
 		end := min(start+contentLen, totalLen)
 
-		headers := make([]byte, 0, HeaderSize)
+		headers := make([]byte, 0, headerSize)
 		headers = append(headers, intToBytes(totalLen)...)
 		headers = append(headers, intToBytes(start)...)
 		headers = append(headers, intToBytes(end)...)
@@ -155,7 +155,7 @@ func (n *NatsTransporter) receiveMultipart(channel string) (data []byte, err err
 				frames = framesHeader
 			}
 
-			partial = partial[HeaderSize:]
+			partial = partial[headerSize:]
 
 			end = min(end, totalLen)
 
