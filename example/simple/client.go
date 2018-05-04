@@ -12,8 +12,27 @@ func RunClient(clientTransport yarf.Transporter) {
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
 
+	tuple := Tuple{}
+	fmt.Println("Performing request, err")
+	res, err := client.Request("a.test.err").
+		Exec().
+		Bind(&tuple).
+		Get()
+
+	fmt.Println(" Result of error", err)
+
+
+	fmt.Println("Performing request, rpc-err")
+	res, err = client.Request("a.test.rpc-err").
+		Exec().
+		Get()
+
+	fmt.Println(" Result of rpc error", err)
+
+
+
 	fmt.Println("Performing request, cat")
-	res, err := client.Request("a.test.cat").
+	res, err = client.Request("a.test.cat").
 		SetParam("arr", []string{"a", "b", "c"}).
 		Exec().
 		Get()
@@ -39,7 +58,7 @@ func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println("Performing request, sub")
 	res, err = client.Request("a.test.sub").
-		Content(tuple{32, 11}).
+		Content(Tuple{32, 11}).
 		Exec().
 		Get()
 

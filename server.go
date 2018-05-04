@@ -24,11 +24,16 @@ func NewServer(t Transporter, namespace ...string) Server {
 	return s
 }
 
-func toServerError(status int, response *Msg, errors ...string) (responseData []byte) {
-
-	response.SetStatus(status)
-	response.SetContent(NewRPCError(status, strings.Join(errors, ";")))
+func toServerErrorFrom(err RPCError, response *Msg) (responseData []byte) {
+	response.SetStatus(err.Status)
+	response.SetContent(err)
 	responseData, _ = response.Marshal()
+	return responseData
+}
+
+
+func toServerError(status int, response *Msg, errors ...string) (responseData []byte) {
+	return toServerErrorFrom(NewRPCError(status, strings.Join(errors, ";")), response)
 	return responseData
 }
 
@@ -52,22 +57,26 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 		resp := Msg{}
 
 		err := req.Unmarshal(requestData)
-		//err := json.Unmarshal(requestData, &req)
 
 		if err != nil {
-			return toServerError(500, &resp, err.Error())
+			return toServerError(StatusUnmarshalError, &resp, err.Error())
 		}
 
 		err = handler(&req, &resp)
 
 		if err != nil {
-			return toServerError(500, &resp, err.Error())
+			err2, ok := err.(RPCError)
+			if ok {
+				return toServerErrorFrom(err2, &resp)
+			}
+
+			return toServerError(StatusHandlerError, &resp, err.Error())
 		}
 
 		responseData, err = resp.Marshal()
 
 		if err != nil {
-			return toServerError(500, &resp, err.Error())
+			return toServerError(StatusMarshalError, &resp, err.Error())
 		}
 
 		return responseData

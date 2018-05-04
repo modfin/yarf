@@ -11,6 +11,11 @@ const StatusOk int = 200
 
 // StatusInternalError rpc status internal server error
 const StatusInternalError int = 500
+const StatusHandlerError int = 510
+const StatusMarshalError int = 550
+const StatusUnmarshalError int = 551
+
+const HeaderStatus = "status"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
@@ -103,13 +108,16 @@ func (m *Msg) Bind(content interface{}) (err error) {
 
 // Status returns the status header of the request, if one exist
 func (m *Msg) Status() (status int, ok bool) {
-	status, ok = m.Headers["status"].(int)
+	statusFloat, ok := m.Headers[HeaderStatus].(float64)
+	if ok {
+		status = int(statusFloat)
+	}
 	return
 }
 
 // SetStatus sets the statues header of the message
 func (m *Msg) SetStatus(code int) *Msg {
-	m.SetHeader("status", code)
+	m.SetHeader(HeaderStatus, code)
 	return m
 }
 
