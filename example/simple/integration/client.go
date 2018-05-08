@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// GetIntegrationTest generates a intergration test for a specific client
+// GetIntegrationTest generates a integration test for a specific client
 func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 
 	len := 2 * 1000000 // 2 mb
