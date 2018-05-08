@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nats-io/go-nats"
-	"github.com/satori/go.uuid"
+
+	"github.com/nats-io/nuid"
 	"strings"
 )
 
@@ -19,7 +20,6 @@ func (n *NatsTransporter) acceptUpgrade(m *nats.Msg) (tx string, rx string, err 
 		return
 	}
 
-	//"UPGRADE " + u4.String()
 	rx = cmd[1] + "-req"
 	tx = cmd[1] + "-resp"
 
@@ -32,18 +32,14 @@ func (n *NatsTransporter) acceptUpgrade(m *nats.Msg) (tx string, rx string, err 
 	return
 }
 
-func (n *NatsTransporter) requestUpgrade(function string) (tx string, rx string, err error) {
-	u4, err := uuid.NewV4()
-	if err != nil {
-		return
-	}
+func (n *NatsTransporter) requestUpgrade(function string, prefix string) (tx string, rx string, err error) {
 
-	uv4s := n.namespace + u4.String()
+	uuid := "_Y_MULTI." + n.namespace + nuid.Next()
 
-	upgradeRequest := "UPGRADE " + uv4s
+	upgradeRequest := prefix + cmdUpgrade + " " + uuid
 
-	tx = uv4s + "-req"
-	rx = uv4s + "-resp"
+	tx = uuid + "-req"
+	rx = uuid + "-resp"
 
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()

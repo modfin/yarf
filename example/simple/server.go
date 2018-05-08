@@ -2,6 +2,7 @@ package simple
 
 import (
 	"bitbucket.org/modfin/yarf"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -25,12 +26,18 @@ func sleep(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 	ms := req.Param("sleep").IntOr(1000)
 
+	ctx, cc := context.WithCancel(req.Ctx)
+	defer cc()
+
 	select {
 	case <-time.After(time.Duration(ms) * time.Millisecond):
-	case <-req.Ctx.Done():
+		print(" Waited the entire time, BAD", req.Ctx.Err())
+	case <-ctx.Done():
 		print(" Canceled at server,", req.Ctx.Err())
 		return req.Ctx.Err()
 	}
+
+	fmt.Println(req.Ctx.Err())
 
 	resp.SetParam("res", ms)
 

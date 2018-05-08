@@ -57,6 +57,13 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 	function = n.namespace + function
 	com := n.fromFunction(function)
 
+	go func() {
+		select {
+		case <-ctx.Done():
+			n.client.Publish(com.ctrl, []byte("CANCEL"))
+		}
+	}()
+
 	err = com.send(ctx, requestData)
 	if err != nil {
 		return nil, err
@@ -75,15 +82,18 @@ func (n *NatsTransporter) Listen(function string, toExec func(ctx context.Contex
 
 		com := n.fromMessage(m)
 
-		requestData, err := com.receive(context.Background())
+		ctx, cancel := com.contextCanceler()
+		defer cancel()
+
+		requestData, err := com.receive(ctx)
 		if err != nil {
 			fmt.Println("Could not recive ", err)
 			return
 		}
 
-		responseData := toExec(context.Background(), requestData)
+		responseData := toExec(ctx, requestData)
 
-		err = com.send(context.Background(), responseData)
+		err = com.send(ctx, responseData)
 		if err != nil {
 			fmt.Println("Could not send ", err)
 			return

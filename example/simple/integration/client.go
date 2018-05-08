@@ -3,8 +3,10 @@ package integration
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/example/simple"
+	"context"
 	"strings"
 	"testing"
+	"time"
 )
 
 // GetIntegrationTest generates a integration test for a specific client
@@ -13,14 +15,38 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 	length := 2 * 1000000 // 2 mb
 
 	return func(t *testing.T) {
+		t.Run("GetTestContextTimeout", GetTestContextTimeout(client))
 		t.Run("GetTestErrors", GetTestErrors(client))
-		t.Run("GetTestErrors", GetTestErrors2(client))
+		t.Run("GetTestErrors2", GetTestErrors2(client))
 		t.Run("GetTestCat", GetTestCat(client, "a", "b", "c"))
 		t.Run("GetTestAdd", GetTestAdd(client, 5, 7))
 		t.Run("GetTestSub", GetTestSub(client, 33, 11))
 		t.Run("GetTestLen", GetTestLen(client, length))
 		t.Run("GetTestGen", GetTestGen(client, length))
 		t.Run("GetTestCopy", GetTestCopy(client, length))
+
+	}
+}
+
+// GetTestContextTimeout generates a Error test for a specific client
+func GetTestContextTimeout(client yarf.Client) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+		defer cancel()
+
+		err := simple.TimeoutRequest(ctx, client, 3000)
+
+		if err == nil {
+			t.Log("Did not get an error")
+			t.Fail()
+			return
+		}
+
+		if !strings.HasSuffix(err.Error(), "context deadline exceeded") {
+			t.Log("Expected context deadline exceeded, got ,", err)
+			t.Fail()
+		}
 
 	}
 }

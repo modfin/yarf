@@ -9,10 +9,10 @@ import (
 )
 
 // TimeoutRequest preforms a request to server to sleep, with context
-func TimeoutRequest(ctx context.Context, client yarf.Client, sleep int) (err error) {
+func TimeoutRequest(ctx context.Context, client yarf.Client, sleepMS int) (err error) {
 	_, err = client.Request("a.integration.sleep").
 		Context(ctx).
-		SetParam("sleep", sleep).
+		SetParam("sleep", sleepMS).
 		Exec().
 		Get()
 	return err
@@ -91,15 +91,17 @@ func CopyRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 func RunClient(clientTransport yarf.Transporter) {
 
 	var err error
-	var res *yarf.Msg
+
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
 
 	fmt.Println("Performing timeout, sleep")
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	err = TimeoutRequest(ctx, client, 2000)
 	cancel()
 	fmt.Println(" Result of error", err)
+
+	time.Sleep(1 * time.Second)
 
 	fmt.Println("Performing request, err")
 	err = ErrorRequest(client)
@@ -109,6 +111,7 @@ func RunClient(clientTransport yarf.Transporter) {
 	err = ErrorRequest2(client)
 	fmt.Println(" Result of rpc error", err)
 
+	var res *yarf.Msg
 	fmt.Println("Performing request, cat")
 	res, err = CatRequest(client, "a", "b", "c")
 
@@ -163,5 +166,7 @@ func RunClient(clientTransport yarf.Transporter) {
 	}
 
 	fmt.Println(" Result ", l, "=", len(res.Content))
+
+	time.Sleep(2 * time.Second)
 
 }
