@@ -1,6 +1,7 @@
 package yarf
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
@@ -26,6 +27,8 @@ const HeaderStatus = "status"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
+	Ctx context.Context
+
 	Headers map[string]interface{}
 
 	Binary  bool

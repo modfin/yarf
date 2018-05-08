@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/modfin/yarf"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Tuple is a simple struct for a tuple
@@ -18,6 +19,22 @@ func print(args ...interface{}) {
 	if doPrint {
 		fmt.Println(args...)
 	}
+}
+
+func sleep(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	ms := req.Param("sleep").IntOr(1000)
+
+	select {
+	case <-time.After(time.Duration(ms) * time.Millisecond):
+	case <-req.Ctx.Done():
+		print(" Canceled at server,", req.Ctx.Err())
+		return req.Ctx.Err()
+	}
+
+	resp.SetParam("res", ms)
+
+	return nil
 }
 
 func err(req *yarf.Msg, resp *yarf.Msg) (err error) {
@@ -85,6 +102,8 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	server.Handle("add", add)
 
 	server.Handle("cat", cat)
+
+	server.Handle("sleep", sleep)
 
 	print("Adding sub handler")
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error) {

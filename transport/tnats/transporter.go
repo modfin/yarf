@@ -68,7 +68,7 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 }
 
 // Listen defines the function that will handle yarf requests
-func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) error {
+func (n *NatsTransporter) Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) error {
 
 	function = n.namespace + function
 	_, err := n.client.Subscribe(function, func(m *nats.Msg) {
@@ -81,7 +81,7 @@ func (n *NatsTransporter) Listen(function string, toExec func(requestData []byte
 			return
 		}
 
-		responseData := toExec(requestData)
+		responseData := toExec(context.Background(), requestData)
 
 		err = com.send(context.Background(), responseData)
 		if err != nil {

@@ -2,9 +2,21 @@ package simple
 
 import (
 	"bitbucket.org/modfin/yarf"
+	"context"
 	"fmt"
 	"log"
+	"time"
 )
+
+// TimeoutRequest preforms a request to server to sleep, with context
+func TimeoutRequest(ctx context.Context, client yarf.Client, sleep int) (err error) {
+	_, err = client.Request("a.integration.sleep").
+		Context(ctx).
+		SetParam("sleep", sleep).
+		Exec().
+		Get()
+	return err
+}
 
 // ErrorRequest shall return a simple error
 func ErrorRequest(client yarf.Client) (err error) {
@@ -82,6 +94,12 @@ func RunClient(clientTransport yarf.Transporter) {
 	var res *yarf.Msg
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
+
+	fmt.Println("Performing timeout, sleep")
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	err = TimeoutRequest(ctx, client, 2000)
+	cancel()
+	fmt.Println(" Result of error", err)
 
 	fmt.Println("Performing request, err")
 	err = ErrorRequest(client)

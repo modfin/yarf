@@ -59,7 +59,6 @@ func NewHTTPTransporter(options Options) (*HTTPTransporter, error) {
 
 // Call implements client side call of transporter
 func (h *HTTPTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
-	//ctx, _ = context.WithTimeout(ctx, durationOr(h.options.Client.Timeout, 10 * time.Second))
 
 	url, err := h.options.Discovery.URL()
 
@@ -68,11 +67,19 @@ func (h *HTTPTransporter) Call(ctx context.Context, function string, requestData
 	}
 
 	r := bytes.NewReader(requestData)
-	resp, err := http.Post(url+"/"+function, "application/octet-stream", r)
+
+	req, err := http.NewRequest("POST", url+"/"+function, r)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/octet-stream")
+
+	var resp *http.Response
+	resp, err = http.DefaultClient.Do(req)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() { resp.Body.Close() }()
 
 	return ioutil.ReadAll(resp.Body)
 }
@@ -98,9 +105,11 @@ func (h *HTTPTransporter) Stop(ctx context.Context) error {
 }
 
 // Listen defines the function that will handle yarf requests
-func (h *HTTPTransporter) Listen(function string, toExec func(requestData []byte) (responseData []byte)) (err error) {
+func (h *HTTPTransporter) Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) (err error) {
 
 	h.mux.HandleFunc("/"+function, func(res http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
+
 		if req.Method != "POST" {
 			//FIX returning error
 			res.WriteHeader(http.StatusBadRequest)
@@ -114,7 +123,15 @@ func (h *HTTPTransporter) Listen(function string, toExec func(requestData []byte
 			return
 		}
 
-		respData := toExec(reqData)
+		if err != nil {
+			//FIX returning error
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		//fmt.Println("CTX", req.Context())
+		respData := toExec(req.Context(), reqData)
+
 		res.WriteHeader(http.StatusOK)
 		res.Header().Set("content-type", "application/octet-stream")
 		_, err = res.Write(respData)

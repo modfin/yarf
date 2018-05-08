@@ -10,7 +10,7 @@ import (
 // GetIntegrationTest generates a integration test for a specific client
 func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 
-	len := 2 * 1000000 // 2 mb
+	length := 2 * 1000000 // 2 mb
 
 	return func(t *testing.T) {
 		t.Run("GetTestErrors", GetTestErrors(client))
@@ -18,9 +18,9 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("GetTestCat", GetTestCat(client, "a", "b", "c"))
 		t.Run("GetTestAdd", GetTestAdd(client, 5, 7))
 		t.Run("GetTestSub", GetTestSub(client, 33, 11))
-		t.Run("GetTestLen", GetTestLen(client, len))
-		t.Run("GetTestGen", GetTestGen(client, len))
-		t.Run("GetTestCopy", GetTestCopy(client, len))
+		t.Run("GetTestLen", GetTestLen(client, length))
+		t.Run("GetTestGen", GetTestGen(client, length))
+		t.Run("GetTestCopy", GetTestCopy(client, length))
 
 	}
 }

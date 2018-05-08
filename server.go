@@ -1,6 +1,7 @@
 package yarf
 
 import (
+	"context"
 	"reflect"
 	"runtime"
 	"strings"
@@ -49,16 +50,17 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 	if s.namespace != "" {
 		function = s.namespace + "." + function
 	}
-	s.transporter.Listen(function, func(requestData []byte) (responseData []byte) {
+	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
 		req := Msg{}
 		resp := Msg{}
 
 		err := req.Unmarshal(requestData)
-
 		if err != nil {
 			return toServerError(StatusUnmarshalError, &resp, err.Error())
 		}
+
+		req.Ctx = ctx
 
 		err = handler(&req, &resp)
 

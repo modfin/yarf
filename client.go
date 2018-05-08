@@ -41,7 +41,7 @@ func (c *Client) Request(function string) *RPC {
 type RPC struct {
 	client   *Client
 	function string
-	context  context.Context
+	ctx      context.Context
 
 	requestMsg         *Msg
 	responseMsg        *Msg
@@ -71,8 +71,8 @@ func (r *RPC) BinaryContent(data []byte) *RPC {
 }
 
 // Context sets context of request for outside control
-func (r *RPC) Context(context context.Context) *RPC {
-	r.context = context
+func (r *RPC) Context(ctx context.Context) *RPC {
+	r.ctx = ctx
 	return r
 }
 
@@ -114,8 +114,8 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 // Exec perform rpc request
 func (r *RPC) Exec() *RPC {
 
-	if r.context == nil {
-		r.context = context.Background()
+	if r.ctx == nil {
+		r.ctx = context.Background()
 	}
 
 	var reqBytes []byte
@@ -143,7 +143,7 @@ func (r *RPC) Exec() *RPC {
 		}()
 
 		var respBytes []byte
-		respBytes, r.err = r.client.transporter.Call(r.context, r.function, reqBytes)
+		respBytes, r.err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
 
 		if r.err != nil {
 			return
