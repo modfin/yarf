@@ -90,7 +90,7 @@ func (d *DiscoveryDNSA) refresh() {
 	}
 
 	if len(ips) > 0 {
-		fmt.Println("Setting", ips, len(ips))
+		//fmt.Println("Setting", ips, len(ips))
 		d.ips = ips
 		d.expires = time.Now().Unix() + int64(ttl)
 	}

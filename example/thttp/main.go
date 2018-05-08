@@ -17,12 +17,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	simple.StartServer(serverTransport)
+	simple.StartServer(serverTransport, true)
 	go serverTransport.Start()
 
 	time.Sleep(200 * time.Millisecond)
 
-	clientTransport, err := thttp.NewHTTPTransporter(thttp.Options{Discovery: &thttp.DiscoveryDNSA{Host: "localhost"}})
+	clientTransport, err := thttp.NewHTTPTransporter(thttp.Options{Discovery: &thttp.DiscoveryDNSA{Host: "127.0.0.1"}})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -6,61 +6,129 @@ import (
 	"log"
 )
 
-// RunClient uses provided transport interface to run some tests
-func RunClient(clientTransport yarf.Transporter) {
 
-	fmt.Println("Creating client")
-	client := yarf.NewClient(clientTransport)
 
+
+func ErrorRequest(client yarf.Client) (err error){
 	tuple := Tuple{}
-	fmt.Println("Performing request, err")
-	res, err := client.Request("a.test.err").
+	_, err = client.Request("a.integration.err").
 		Exec().
 		Bind(&tuple).
 		Get()
+	return err
+}
 
+func ErrorRequest2(client yarf.Client) (err error){
+	_, err = client.Request("a.integration.rpc-err").
+		Exec().
+		Get()
+	return err
+}
+
+func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error){
+	return client.Request("a.integration.cat").
+		SetParam("arr", arr).
+		Exec().
+		Get()
+}
+
+
+func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error){
+	return  client.Request("a.integration.add").
+		SetParam("val1", i).
+		SetParam("val2", j).
+		Exec().
+		Get()
+}
+
+func SubRequest(client yarf.Client, i, j int) (*yarf.Msg, error){
+	return client.Request("a.integration.sub").
+		Content(Tuple{i, j}).
+		Exec().
+		Get()
+}
+
+
+func LenRequest(client yarf.Client, len int) (*yarf.Msg, error){
+	arr := make([]byte, len)
+	return client.Request("a.integration.len").
+		BinaryContent(arr).
+		Exec().
+		Get()
+}
+
+func GenRequest(client yarf.Client, len int) (*yarf.Msg, error){
+	return client.Request("a.integration.gen").
+		SetParam("len", len).
+		Exec().
+		Get()
+}
+
+
+func CopyRequest(client yarf.Client, len int) (*yarf.Msg, error){
+	arr := make([]byte, len)
+	return client.Request("a.integration.copy").
+		BinaryContent(arr).
+		Exec().
+		Get()
+}
+
+
+
+
+
+// RunClient uses provided transport interface to run some tests
+func RunClient(clientTransport yarf.Transporter) {
+
+	var err error
+	var res *yarf.Msg
+	fmt.Println("Creating client")
+	client := yarf.NewClient(clientTransport)
+
+
+
+
+	fmt.Println("Performing request, err")
+	err = ErrorRequest(client)
 	fmt.Println(" Result of error", err)
 
 
-	fmt.Println("Performing request, rpc-err")
-	res, err = client.Request("a.test.rpc-err").
-		Exec().
-		Get()
 
+
+
+	fmt.Println("Performing request, rpc-err")
+	err = ErrorRequest2(client)
 	fmt.Println(" Result of rpc error", err)
 
 
 
+
+
+
 	fmt.Println("Performing request, cat")
-	res, err = client.Request("a.test.cat").
-		SetParam("arr", []string{"a", "b", "c"}).
-		Exec().
-		Get()
+	res, err = CatRequest(client, "a", "b", "c")
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println(" Result of a + b + c =", res.Param("res").StringOr("Fail"))
 
+
+
+
+
 	fmt.Println("Performing request, add")
-	res, err = client.Request("a.test.add").
-		SetParam("val1", 5).
-		SetParam("val2", 7).
-		Exec().
-		Get()
+	res, err = AddRequest(client, 5, 7)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println(" Result of 5 + 7 =", res.Param("res").IntOr(-1))
 
+
+
 	fmt.Println("Performing request, sub")
-	res, err = client.Request("a.test.sub").
-		Content(Tuple{32, 11}).
-		Exec().
-		Get()
+	res, err = SubRequest(client, 32, 11)
 
 	if err != nil {
 		log.Fatal(err)
@@ -68,26 +136,27 @@ func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println(" Result of 32 + 11 =", res.Param("res").IntOr(-1))
 
+
+
+
+
 	fmt.Println("Performing request, len")
 	l := 2 * 1000000
-	arr := make([]byte, l)
-	res, err = client.Request("a.test.len").
-		BinaryContent(arr).
-		Exec().
-		Get()
+	res, err = LenRequest(client, l)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(" Result ", len(arr), "=", res.Param("res").IntOr(-1))
+	fmt.Println(" Result ", l, "=", res.Param("res").IntOr(-1))
+
+
+
+
 
 	fmt.Println("Performing request, gen")
 	l = 2 * 1000000
-	res, err = client.Request("a.test.gen").
-		SetParam("len", l).
-		Exec().
-		Get()
+	res, err = GenRequest(client, l)
 
 	if err != nil {
 		log.Fatal(err)
@@ -95,18 +164,18 @@ func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println(" Result  ", l, "=", len(res.Content))
 
+
+
+
+
 	fmt.Println("Performing request, copy")
 	l = 2 * 1000000
-	arr = make([]byte, l)
-	res, err = client.Request("a.test.copy").
-		BinaryContent(arr).
-		Exec().
-		Get()
+	res, err = CopyRequest(client, l)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(" Result ", len(arr), "=", len(res.Content))
+	fmt.Println(" Result ", l, "=", len(res.Content))
 
 }

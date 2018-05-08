@@ -11,7 +11,7 @@ import (
 func main() {
 
 	// Nats own demo servers is not well suited for large payloads, which is tested. So you might want to change this
-	// if you want to accrual test nats as the transport layer
+	// if you want to accrual integration nats as the transport layer
 	fmt.Println("Creating server transport")
 	serverTransport, err := tnats.NewNatsTransporter("nats://demo.nats.io:4222", 10*time.Second)
 
@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	simple.StartServer(serverTransport)
+	simple.StartServer(serverTransport, true)
 
 	time.Sleep(200 * time.Millisecond)
 

@@ -11,24 +11,32 @@ type Tuple struct {
 	Val2 int
 }
 
+var doPrint bool
 
+
+func print(args ... interface{}){
+	if doPrint {
+		fmt.Println(args...)
+	}
+}
 
 func err(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
-	fmt.Println(" Got request Error request")
+
+	print(" Got request Error request")
 	return errors.New("this endpoint returns an error")
 }
 
 func rpcErr(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
-	fmt.Println(" Got request RPC Error request")
+	print(" Got request RPC Error request")
 	return yarf.NewRPCError(600, "custom error status")
 }
 
 
 func add(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
-	fmt.Println(" Got request Add")
+	print(" Got request Add")
 	val1 := req.Param("val1")
 	val2 := req.Param("val2")
 
@@ -49,7 +57,7 @@ func add(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
-	fmt.Println(" Got request cat")
+	print(" Got request cat")
 	arr := req.Param("arr").StringArrOr([]string{"No", "Data"})
 
 	res := ""
@@ -62,26 +70,27 @@ func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	return nil
 }
 
-// StartServer starts a test server using provided yarf transport
-func StartServer(serverTransport yarf.Transporter) {
+// StartServer starts a integration server using provided yarf transport
+func StartServer(serverTransport yarf.Transporter, verbose bool) {
+	doPrint = verbose
 
-	fmt.Println("Creating server")
-	server := yarf.NewServer(serverTransport, "a", "test")
+	print("Creating server")
+	server := yarf.NewServer(serverTransport, "a", "integration")
 
-	fmt.Println("Adding err handler")
+	print("Adding err handler")
 	server.Handle("err", err)
 
-	fmt.Println("Adding rpc err handler")
+	print("Adding rpc err handler")
 	server.Handle("rpc-err", rpcErr)
 
-	fmt.Println("Adding add handler")
+	print("Adding add handler")
 	server.Handle("add", add)
 
 	server.Handle("cat", cat)
 
-	fmt.Println("Adding sub handler")
+	print("Adding sub handler")
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
-		fmt.Println(" Got request Sub")
+		print(" Got request Sub")
 		var t Tuple
 		err = req.Bind(&t)
 		if err != nil {
@@ -93,18 +102,18 @@ func StartServer(serverTransport yarf.Transporter) {
 		return nil
 	})
 
-	fmt.Println("Adding len content check")
+	print("Adding len content check")
 	server.Handle("len", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
-		fmt.Println(" Got request len")
+		print(" Got request len")
 
 		resp.SetParam("res", len(req.Content))
 
 		return nil
 	})
 
-	fmt.Println("Adding gen")
+	print("Adding gen")
 	server.Handle("gen", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
-		fmt.Println(" Got request gen")
+		print(" Got request gen")
 
 		l, ok := req.Param("len").Int()
 		if !ok {
@@ -117,9 +126,9 @@ func StartServer(serverTransport yarf.Transporter) {
 		return nil
 	})
 
-	fmt.Println("Adding copy")
+	print("Adding copy")
 	server.Handle("copy", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
-		fmt.Println(" Got request copy")
+		print(" Got request copy")
 
 		resp.SetBinaryContent(req.Content)
 
