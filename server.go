@@ -31,10 +31,8 @@ func toServerErrorFrom(err RPCError, response *Msg) (responseData []byte) {
 	return responseData
 }
 
-
 func toServerError(status int, response *Msg, errors ...string) (responseData []byte) {
 	return toServerErrorFrom(NewRPCError(status, strings.Join(errors, ";")), response)
-	return responseData
 }
 
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"

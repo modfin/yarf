@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+// Tuple is a simple struct for a tuple
 type Tuple struct {
 	Val1 int
 	Val2 int
@@ -13,15 +14,13 @@ type Tuple struct {
 
 var doPrint bool
 
-
-func print(args ... interface{}){
+func print(args ...interface{}) {
 	if doPrint {
 		fmt.Println(args...)
 	}
 }
 
 func err(req *yarf.Msg, resp *yarf.Msg) (err error) {
-
 
 	print(" Got request Error request")
 	return errors.New("this endpoint returns an error")
@@ -32,7 +31,6 @@ func rpcErr(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	print(" Got request RPC Error request")
 	return yarf.NewRPCError(600, "custom error status")
 }
-
 
 func add(req *yarf.Msg, resp *yarf.Msg) (err error) {
 

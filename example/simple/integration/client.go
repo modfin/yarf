@@ -1,13 +1,14 @@
 package integration
 
 import (
-	"testing"
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/example/simple"
 	"strings"
+	"testing"
 )
 
-func GetIntegrationTest(client yarf.Client) (func(t *testing.T)) {
+// GetIntegrationTest generates a intergration test for a specific client
+func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 
 	len := 2 * 1000000 // 2 mb
 
@@ -24,6 +25,7 @@ func GetIntegrationTest(client yarf.Client) (func(t *testing.T)) {
 	}
 }
 
+// GetTestErrors generates a Error test for a specific client
 func GetTestErrors(client yarf.Client) func(t *testing.T) {
 	return func(t *testing.T) {
 		err := simple.ErrorRequest(client)
@@ -49,6 +51,7 @@ func GetTestErrors(client yarf.Client) func(t *testing.T) {
 	}
 }
 
+// GetTestErrors2 generates a Error test for a specific client
 func GetTestErrors2(client yarf.Client) func(t *testing.T) {
 	return func(t *testing.T) {
 		err := simple.ErrorRequest2(client)
@@ -74,8 +77,8 @@ func GetTestErrors2(client yarf.Client) func(t *testing.T) {
 	}
 }
 
-
-func GetTestCat(client yarf.Client, arr ... string) func(t *testing.T) {
+// GetTestCat generates a Array param test for a specific client
+func GetTestCat(client yarf.Client, arr ...string) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.CatRequest(client, arr...)
 
@@ -90,15 +93,15 @@ func GetTestCat(client yarf.Client, arr ... string) func(t *testing.T) {
 			t.Fail()
 		}
 
-		if strings.Join(arr, "") !=  res.Param("res").StringOr("FAIL"){
-			t.Log("Got response",  res.Param("res"), "expected", strings.Join(arr, "") )
+		if strings.Join(arr, "") != res.Param("res").StringOr("FAIL") {
+			t.Log("Got response", res.Param("res"), "expected", strings.Join(arr, ""))
 			t.Fail()
 		}
-
 
 	}
 }
 
+// GetBenchmarkAdd generates a integer param benchmark for a specific client
 func GetBenchmarkAdd(client yarf.Client, i, j int) func(t *testing.B) {
 	return func(b *testing.B) {
 
@@ -121,7 +124,7 @@ func GetBenchmarkAdd(client yarf.Client, i, j int) func(t *testing.B) {
 	}
 }
 
-
+// GetTestAdd generates a integer param test for a specific client
 func GetTestAdd(client yarf.Client, i, j int) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.AddRequest(client, i, j)
@@ -132,16 +135,14 @@ func GetTestAdd(client yarf.Client, i, j int) func(t *testing.T) {
 			return
 		}
 
-		if int64(i+j) !=  res.Param("res").IntOr(-1) {
-			t.Log("Got response",  res.Param("res"), "expected", int64(i+j))
+		if int64(i+j) != res.Param("res").IntOr(-1) {
+			t.Log("Got response", res.Param("res"), "expected", int64(i+j))
 			t.Fail()
 		}
 	}
 }
 
-
-
-
+// GetTestSub generates a integer param test for a specific client
 func GetTestSub(client yarf.Client, i, j int) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.SubRequest(client, i, j)
@@ -152,16 +153,15 @@ func GetTestSub(client yarf.Client, i, j int) func(t *testing.T) {
 			return
 		}
 
-		if int64(i-j) !=  res.Param("res").IntOr(-1) {
-			t.Log("Got response",  res.Param("res"), "expected", int64(i-j))
+		if int64(i-j) != res.Param("res").IntOr(-1) {
+			t.Log("Got response", res.Param("res"), "expected", int64(i-j))
 			t.Fail()
 		}
-
 
 	}
 }
 
-
+// GetTestLen generates a large request payload test for a specific client
 func GetTestLen(client yarf.Client, length int) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.LenRequest(client, length)
@@ -172,16 +172,15 @@ func GetTestLen(client yarf.Client, length int) func(t *testing.T) {
 			return
 		}
 
-		if int64(length) !=  res.Param("res").IntOr(-1) {
-			t.Log("Got response",  res.Param("res"), "expected", length)
+		if int64(length) != res.Param("res").IntOr(-1) {
+			t.Log("Got response", res.Param("res"), "expected", length)
 			t.Fail()
 		}
-
 
 	}
 }
 
-
+// GetTestGen generates a large response payload test for a specific client
 func GetTestGen(client yarf.Client, length int) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.GenRequest(client, length)
@@ -193,14 +192,14 @@ func GetTestGen(client yarf.Client, length int) func(t *testing.T) {
 		}
 
 		if length != len(res.Content) {
-			t.Log("Got response len",  len(res.Content), "expected", length)
+			t.Log("Got response len", len(res.Content), "expected", length)
 			t.Fail()
 		}
-
 
 	}
 }
 
+// GetTestCopy generates a large request/response payload test for a specific client
 func GetTestCopy(client yarf.Client, length int) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := simple.CopyRequest(client, length)
@@ -212,10 +211,9 @@ func GetTestCopy(client yarf.Client, length int) func(t *testing.T) {
 		}
 
 		if length != len(res.Content) {
-			t.Log("Got response len",  len(res.Content), "expected", length)
+			t.Log("Got response len", len(res.Content), "expected", length)
 			t.Fail()
 		}
-
 
 	}
 }

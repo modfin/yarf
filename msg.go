@@ -7,14 +7,21 @@ import (
 )
 
 // StatusOk rpc status ok
-const StatusOk int = 200
+const StatusOk = 200
 
 // StatusInternalError rpc status internal server error
-const StatusInternalError int = 500
-const StatusHandlerError int = 510
-const StatusMarshalError int = 550
-const StatusUnmarshalError int = 551
+const StatusInternalError = 500
 
+// StatusHandlerError the handler function of request failed
+const StatusHandlerError = 510
+
+// StatusMarshalError could not marshal data
+const StatusMarshalError = 550
+
+// StatusUnmarshalError could not unmarshal data
+const StatusUnmarshalError = 551
+
+// HeaderStatus is the status header param name
 const HeaderStatus = "status"
 
 // Msg represents a message that is being passed between client and server
