@@ -27,6 +27,7 @@ type txrx struct {
 
 func (n *NatsTransporter) fromFunction(function string) txrx {
 
+	// TODO add optional if context is provided
 	ctrl := "_Y_CTRL." + nuid.Next()
 
 	return txrx{
@@ -39,6 +40,8 @@ func (n *NatsTransporter) fromFunction(function string) txrx {
 }
 
 func (n *NatsTransporter) fromMessage(message *nats.Msg) txrx {
+
+	// TODO add optional if context is provided
 	ctrl := string(message.Data[:ctrlHeaderLen])
 	message.Data = message.Data[ctrlHeaderLen:]
 
@@ -60,7 +63,6 @@ func (t *txrx) contextCanceler() (context.Context, func()) {
 		sub, err := t.transporter.client.SubscribeSync(t.ctrl)
 		defer sub.Unsubscribe()
 		defer cancel()
-		//defer func(){fmt.Println("QUITING")}()
 
 		if err != nil {
 			fmt.Println("contextCanceler err 1", err)

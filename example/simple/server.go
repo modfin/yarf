@@ -24,20 +24,21 @@ func print(args ...interface{}) {
 
 func sleep(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
+	ctx := req.Context()
 	ms := req.Param("sleep").IntOr(1000)
 
-	ctx, cc := context.WithCancel(req.Ctx)
+	ctx, cc := context.WithCancel(ctx)
 	defer cc()
 
 	select {
 	case <-time.After(time.Duration(ms) * time.Millisecond):
-		print(" Waited the entire time, BAD", req.Ctx.Err())
+		print(" Waited the entire time, BAD", req.Context().Err())
 	case <-ctx.Done():
-		print(" Canceled at server,", req.Ctx.Err())
-		return req.Ctx.Err()
+		print(" Canceled at server,", ctx.Err())
+		return ctx.Err()
 	}
 
-	fmt.Println(req.Ctx.Err())
+	fmt.Println(ctx.Err())
 
 	resp.SetParam("res", ms)
 

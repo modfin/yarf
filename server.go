@@ -60,7 +60,7 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 			return toServerError(StatusUnmarshalError, &resp, err.Error())
 		}
 
-		req.Ctx = ctx
+		req.ctx = ctx
 
 		err = handler(&req, &resp)
 

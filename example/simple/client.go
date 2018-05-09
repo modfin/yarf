@@ -11,7 +11,7 @@ import (
 // TimeoutRequest preforms a request to server to sleep, with context
 func TimeoutRequest(ctx context.Context, client yarf.Client, sleepMS int) (err error) {
 	_, err = client.Request("a.integration.sleep").
-		Context(ctx).
+		WithContext(ctx).
 		SetParam("sleep", sleepMS).
 		Exec().
 		Get()

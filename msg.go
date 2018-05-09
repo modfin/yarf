@@ -27,7 +27,7 @@ const HeaderStatus = "status"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
-	Ctx context.Context
+	ctx context.Context
 
 	Headers map[string]interface{}
 
@@ -163,6 +163,11 @@ func (m *Msg) SetBinaryContent(content []byte) *Msg {
 	m.Content = content
 	m.Binary = true
 	return m
+}
+
+// Context returns the context of the message. This is primarily for use on the server side, in order to monitor Done from client side
+func (m *Msg) Context() context.Context {
+	return m.ctx
 }
 
 // SetParam sets a param in the params header of the message. Which later provides helper methods of de/serializations and defaults.

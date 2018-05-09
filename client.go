@@ -70,8 +70,8 @@ func (r *RPC) BinaryContent(data []byte) *RPC {
 	return r
 }
 
-// Context sets context of request for outside control
-func (r *RPC) Context(ctx context.Context) *RPC {
+// WithContext sets context of request for outside control
+func (r *RPC) WithContext(ctx context.Context) *RPC {
 	r.ctx = ctx
 	return r
 }
@@ -118,9 +118,13 @@ func (r *RPC) Exec() *RPC {
 		r.ctx = context.Background()
 	}
 
+	var cancel func()
+	r.ctx, cancel = context.WithCancel(r.ctx)
+
 	var reqBytes []byte
 	reqBytes, r.err = r.requestMsg.Marshal()
 	if r.err != nil {
+		cancel()
 		return r
 	}
 
@@ -137,7 +141,7 @@ func (r *RPC) Exec() *RPC {
 					r.errorCallback(r.err)
 				}
 			}
-
+			cancel()
 			r.done <- true
 
 		}()
