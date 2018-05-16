@@ -2,6 +2,7 @@ package simple
 
 import (
 	"bitbucket.org/modfin/yarf"
+	"bitbucket.org/modfin/yarf/middleware"
 	"context"
 	"errors"
 	"fmt"
@@ -100,6 +101,8 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
 
+	//server.WithMiddleware(middleware.Logging)
+
 	print("Adding err handler")
 	server.Handle("err", err)
 
@@ -112,6 +115,11 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	server.Handle("cat", cat)
 
 	server.Handle("sleep", sleep)
+
+	print("Adding panic handler")
+	server.Handle("panic", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
+		panic("im suppose to panic")
+	}, middleware.Recover)
 
 	print("Adding sub handler")
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error) {

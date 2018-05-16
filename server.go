@@ -11,6 +11,7 @@ import (
 type Server struct {
 	transporter Transporter
 	namespace   string
+	middleware  []Middleware
 }
 
 // NewServer creates a new server with a particular server and name space of functions provided
@@ -36,6 +37,11 @@ func toServerError(status int, response *Msg, errors ...string) (responseData []
 	return toServerErrorFrom(NewRPCError(status, strings.Join(errors, ";")), response)
 }
 
+// WithMiddleware add middleware to all requests
+func (s *Server) WithMiddleware(middleware ...Middleware) {
+	s.middleware = append(s.middleware, middleware...)
+}
+
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"
 // e.g. my-namespace.Add, if a function named Add is passed into the function
 func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error) {
@@ -46,10 +52,11 @@ func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error) {
 
 // Handle creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.function"
 // e.g. my-namespace.Add, if a string "Add" is passed into the function coupled with a handler function
-func (s *Server) Handle(function string, handler func(request *Msg, response *Msg) error) {
+func (s *Server) Handle(function string, handler func(request *Msg, response *Msg) error, middleware ...Middleware) {
 	if s.namespace != "" {
 		function = s.namespace + "." + function
 	}
+
 	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
 		req := Msg{}
@@ -59,10 +66,9 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 		if err != nil {
 			return toServerError(StatusUnmarshalError, &resp, err.Error())
 		}
-
 		req.ctx = ctx
 
-		err = handler(&req, &resp)
+		err = processMiddleware(&req, &resp, handler, append(s.middleware, middleware...)...)
 
 		if err != nil {
 			err2, ok := err.(RPCError)

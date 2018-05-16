@@ -76,6 +76,14 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 	return err
 }
 
+// PanicRequest shall panic at the server side
+func PanicRequest(client yarf.Client) (err error) {
+	_, err = client.Request("a.integration.panic").
+		Exec().
+		Get()
+	return err
+}
+
 // CatRequest concatenates an array of strings in a string
 func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	return client.Request("a.integration.cat").
@@ -197,6 +205,10 @@ func RunClient(clientTransport yarf.Transporter) {
 	fmt.Println("Performing request, rpc-err")
 	err = ErrorRequest2(client)
 	fmt.Println(" Result of rpc error", err)
+
+	fmt.Println("Performing request, panic")
+	err = PanicRequest(client)
+	fmt.Println(" Result of panic", err)
 
 	var res *yarf.Msg
 	fmt.Println("Performing request, cat")

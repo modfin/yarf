@@ -20,6 +20,7 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("GetTestErrors2", GetTestErrors2(client, simple.ErrorRequest2))
 		t.Run("GetTestErrors2Channel", GetTestErrors2(client, simple.Error2ChannelRequest))
 		t.Run("GetTestErrors2Callback", GetTestErrors2(client, simple.Error2CallbackRequest))
+		t.Run("GetTestPanic", GetTestPanic(client, simple.PanicRequest))
 		t.Run("GetTestCat", GetTestCat(client, simple.CatRequest, "a", "b", "c"))
 		t.Run("GetTestCatChannel", GetTestCat(client, simple.CatChannelRequest, "a", "b", "c"))
 		t.Run("GetTestCatCallback", GetTestCat(client, simple.CatCallbackRequest, "a", "b", "c"))
@@ -100,6 +101,32 @@ func GetTestErrors2(client yarf.Client, function func(client yarf.Client) (err e
 		}
 
 		if rerr.Status != 600 {
+			t.Log("expected 600 got,", rerr.Status)
+			t.Fail()
+		}
+
+	}
+}
+
+// GetTestPanic generates a Error and test server side recover middleware
+func GetTestPanic(client yarf.Client, function func(client yarf.Client) (err error)) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := function(client)
+
+		if err == nil {
+			t.Log("Did not get an error")
+			t.Fail()
+			return
+		}
+
+		rerr, ok := err.(yarf.RPCError)
+
+		if !ok {
+			t.Fail()
+			return
+		}
+
+		if rerr.Status != yarf.StatusInternalPanic {
 			t.Log("expected 600 got,", rerr.Status)
 			t.Fail()
 		}

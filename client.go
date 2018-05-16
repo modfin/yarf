@@ -62,11 +62,11 @@ type RPC struct {
 	callback      func(*Msg)
 	errorCallback func(error)
 
-	channel      chan (*Msg)
-	errorChannel chan (error)
+	channel      chan *Msg
+	errorChannel chan error
 
 	err    error
-	done   chan (bool)
+	done   chan bool
 	isDone bool
 }
 
@@ -166,6 +166,8 @@ func (r *RPC) Exec() *RPC {
 	if r.ctx == nil {
 		r.ctx = context.Background()
 	}
+
+	r.requestMsg.SetHeader(HeaderFunction, r.function)
 
 	var cancel func()
 	r.ctx, cancel = context.WithCancel(r.ctx)

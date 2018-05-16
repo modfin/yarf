@@ -13,6 +13,9 @@ const StatusOk = 200
 // StatusInternalError rpc status internal server error
 const StatusInternalError = 500
 
+// StatusInternalPanic rpc status internal server error when recovered from panic
+const StatusInternalPanic = 501
+
 // StatusHandlerError the handler function of request failed
 const StatusHandlerError = 510
 
@@ -24,6 +27,9 @@ const StatusUnmarshalError = 551
 
 // HeaderStatus is the status header param name
 const HeaderStatus = "status"
+
+// HeaderFunction is the function name header param name
+const HeaderFunction = "function"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
@@ -122,6 +128,12 @@ func (m *Msg) Status() (status int, ok bool) {
 	if ok {
 		status = int(statusFloat)
 	}
+	return
+}
+
+// Function returns the function name being called, if one exist
+func (m *Msg) Function() (status string, ok bool) {
+	status, ok = m.Headers[HeaderFunction].(string)
 	return
 }
 
