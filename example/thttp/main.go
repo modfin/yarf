@@ -2,7 +2,6 @@ package main
 
 import (
 	"bitbucket.org/modfin/yarf/example/simple"
-	"bitbucket.org/modfin/yarf/transport/tdecoraters"
 	"bitbucket.org/modfin/yarf/transport/thttp"
 	"fmt"
 	"os"
@@ -29,6 +28,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	simple.RunClient(tdecoraters.ClientLogging(clientTransport))
+	simple.RunClient(clientTransport)
 
 }

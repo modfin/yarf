@@ -23,6 +23,12 @@ func NewClient(t Transporter) Client {
 // Client is a struct wrapping a transporting layer and methods for using yarf
 type Client struct {
 	transporter Transporter
+	middleware []Middleware
+}
+
+
+func (c *Client) WithMiddleware(middleware ...Middleware) {
+	c.middleware = append(c.middleware, middleware...)
 }
 
 // Call performs a request from function name, and req param. The response is unmarshaled to resp
@@ -158,7 +164,7 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 }
 
 // Exec perform rpc request
-func (r *RPC) Exec() *RPC {
+func (r *RPC) Exec(middleware...Middleware) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.state = execState
@@ -172,19 +178,12 @@ func (r *RPC) Exec() *RPC {
 	var cancel func()
 	r.ctx, cancel = context.WithCancel(r.ctx)
 
-	var reqBytes []byte
-	reqBytes, r.err = r.requestMsg.Marshal()
-
-	if r.err != nil {
-		cancel()
-		return r
-	}
 
 	go func() {
+		r.mutex.Lock()
+		defer r.mutex.Unlock()
 		defer func() {
-
 			if r.err != nil {
-
 				if r.errorChannel != nil {
 					r.errorChannel <- r.err
 				}
@@ -203,29 +202,45 @@ func (r *RPC) Exec() *RPC {
 
 		r.state = callState
 
-		var respBytes []byte
-		respBytes, r.err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
+		r.err = processMiddleware(r.requestMsg, r.responseMsg, func(request *Msg, response *Msg) error{
+
+			var reqBytes []byte
+			reqBytes, err := request.Marshal()
+
+			if err != nil {
+				return err
+			}
+
+			var respBytes []byte
+			respBytes, err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
+
+			if err != nil {
+				return err
+			}
+
+			err = response.Unmarshal(respBytes)
+			if err != nil {
+				return err
+			}
+
+			if s, ok := response.Status(); s >= 500 && ok {
+				err := RPCError{}
+				response.Bind(&err)
+				return err
+			}
+
+			if r.responseMsgContent != nil {
+				err = response.Bind(r.responseMsgContent)
+				return err
+			}
+
+			return nil
+		}, append(r.client.middleware, middleware...)...)
 
 		r.state = respState
 
 		if r.err != nil {
 			return
-		}
-
-		r.err = r.responseMsg.Unmarshal(respBytes)
-		if r.err != nil {
-			return
-		}
-
-		if s, ok := r.responseMsg.Status(); s >= 500 && ok {
-			err := RPCError{}
-			r.responseMsg.Bind(&err)
-			r.err = err
-			return
-		}
-
-		if r.responseMsgContent != nil {
-			r.err = r.responseMsg.Bind(r.responseMsgContent)
 		}
 
 		if r.channel != nil {

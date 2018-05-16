@@ -101,7 +101,8 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
 
-	//server.WithMiddleware(middleware.Logging)
+	//server.WithMiddleware(PrintPre("Server 1"), PrintPre("Server 2"), PrintPre("Server 3"))
+
 
 	print("Adding err handler")
 	server.Handle("err", err)

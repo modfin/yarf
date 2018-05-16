@@ -14,19 +14,23 @@ type loggingContent struct {
 }
 
 // Logging is a middleware for logging requests on the server side.
-func Logging(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
-	l := loggingContent{}
-	l.Function, _ = request.Function()
-	l.At = time.Now()
-	l.Headers, _ = json.Marshal(request.Headers)
+func Logging() func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
-	b, _ := json.Marshal(l)
+	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error{
+		l := loggingContent{}
+		l.Function, _ = request.Function()
+		l.At = time.Now()
+		l.Headers, _ = json.Marshal(request.Headers)
 
-	fmt.Println(string(b))
+		b, _ := json.Marshal(l)
 
-	err := next()
+		fmt.Println(string(b))
 
-	// TODO log errors...
+		err := next()
 
-	return err
+		// TODO log errors...
+
+		return err
+	}
+
 }

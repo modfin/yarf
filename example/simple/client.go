@@ -73,6 +73,7 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 	case err = <-errChan:
 	}
 
+
 	return err
 }
 
@@ -189,6 +190,8 @@ func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
+
+	//client.WithMiddleware(PrintPre("Client 1"), PrintPre("Client 2"), PrintPre("Client 3"))
 
 	fmt.Println("Performing timeout, sleep")
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
