@@ -16,6 +16,7 @@ var client yarf.Client
 func TestMain(m *testing.M) {
 
 	fmt.Println("Creating server transport")
+	var serverTransport yarf.Transporter
 	serverTransport, err := NewNatsTransporter("nats://demo.nats.io:4222", 10*time.Second)
 
 	if err != nil {
@@ -27,7 +28,7 @@ func TestMain(m *testing.M) {
 
 	time.Sleep(200 * time.Millisecond)
 
-	clientTransport, err = NewNatsTransporter("nats://demo.nats.io:4222", 10*time.Second)
+	clientTransport, err = NewNatsTransporter("nats://demo.nats.io:4222", 10000*time.Second)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -17,8 +17,12 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Run("GetTestContextTimeout", GetTestContextTimeout(client))
 		t.Run("GetTestErrors", GetTestErrors(client))
-		t.Run("GetTestErrors2", GetTestErrors2(client))
-		t.Run("GetTestCat", GetTestCat(client, "a", "b", "c"))
+		t.Run("GetTestErrors2", GetTestErrors2(client, simple.ErrorRequest2))
+		t.Run("GetTestErrors2Channel", GetTestErrors2(client, simple.Error2ChannelRequest))
+		t.Run("GetTestErrors2Callback", GetTestErrors2(client, simple.Error2CallbackRequest))
+		t.Run("GetTestCat", GetTestCat(client, simple.CatRequest, "a", "b", "c"))
+		t.Run("GetTestCatChannel", GetTestCat(client, simple.CatChannelRequest, "a", "b", "c"))
+		t.Run("GetTestCatCallback", GetTestCat(client, simple.CatCallbackRequest, "a", "b", "c"))
 		t.Run("GetTestAdd", GetTestAdd(client, 5, 7))
 		t.Run("GetTestSub", GetTestSub(client, 33, 11))
 		t.Run("GetTestLen", GetTestLen(client, length))
@@ -78,9 +82,9 @@ func GetTestErrors(client yarf.Client) func(t *testing.T) {
 }
 
 // GetTestErrors2 generates a Error test for a specific client
-func GetTestErrors2(client yarf.Client) func(t *testing.T) {
+func GetTestErrors2(client yarf.Client, function func(client yarf.Client) (err error)) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := simple.ErrorRequest2(client)
+		err := function(client)
 
 		if err == nil {
 			t.Log("Did not get an error")
@@ -103,10 +107,11 @@ func GetTestErrors2(client yarf.Client) func(t *testing.T) {
 	}
 }
 
+
 // GetTestCat generates a Array param test for a specific client
-func GetTestCat(client yarf.Client, arr ...string) func(t *testing.T) {
+func GetTestCat(client yarf.Client, function func(client yarf.Client, arr ...string) (*yarf.Msg, error), arr ...string) func(t *testing.T) {
 	return func(t *testing.T) {
-		res, err := simple.CatRequest(client, arr...)
+		res, err := function(client, arr...)
 
 		if err != nil {
 			t.Log("Got err", err)
@@ -126,6 +131,7 @@ func GetTestCat(client yarf.Client, arr ...string) func(t *testing.T) {
 
 	}
 }
+
 
 // GetBenchmarkAdd generates a integer param benchmark for a specific client
 func GetBenchmarkAdd(client yarf.Client, i, j int) func(t *testing.B) {

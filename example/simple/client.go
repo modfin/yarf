@@ -36,6 +36,47 @@ func ErrorRequest2(client yarf.Client) (err error) {
 	return err
 }
 
+// ErrorChannelRequest shall return a simple error by using channels
+func Error2ChannelRequest(client yarf.Client) (err error) {
+	msgChan, errChan := client.Request("a.integration.rpc-err").
+		UseChannels().
+		Exec().
+		Channels()
+
+	select {
+	case <-msgChan:
+	case err = <-errChan:
+	}
+
+	return err
+}
+
+// Error2CallbackRequest shall return a simple error by using callbacks
+func Error2CallbackRequest(client yarf.Client) (err error) {
+
+	msgChan := make(chan *yarf.Msg)
+	errChan := make(chan error)
+
+	msgFunc := func(msg *yarf.Msg) {
+		msgChan<-msg
+	}
+	errFunc :=	func(e error) {
+			errChan<-e
+		}
+
+	client.Request("a.integration.rpc-err").
+		WithCallback(msgFunc, errFunc).
+		Exec()
+
+	select {
+	case <-msgChan:
+	case err = <-errChan:
+	}
+
+	return err
+}
+
+
 // CatRequest concatenates an array of strings in a string
 func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	return client.Request("a.integration.cat").
@@ -43,6 +84,56 @@ func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 		Exec().
 		Get()
 }
+
+// CatChannelRequest concatenates an array of strings in a string by using channels
+func CatChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
+	msgChan, errChan := client.Request("a.integration.cat").
+		SetParam("arr", arr).
+		UseChannels().
+		Exec().
+		Channels()
+
+	var err error
+	var msg *yarf.Msg
+	select {
+	case msg = <-msgChan:
+	case err = <-errChan:
+	}
+
+	return msg, err
+
+}
+
+
+// CatCallbackRequest concatenates an array of strings in a string by using callbacks
+func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
+
+	msgChan := make(chan *yarf.Msg)
+	errChan := make(chan error)
+
+	msgFunc := func(msg *yarf.Msg) {
+		msgChan<-msg
+	}
+	errFunc :=	func(e error) {
+		errChan<-e
+	}
+
+	client.Request("a.integration.cat").
+		SetParam("arr", arr).
+		WithCallback(msgFunc, errFunc).
+		Exec()
+
+	var err error
+	var msg *yarf.Msg
+	select {
+	case msg = <-msgChan:
+	case err = <-errChan:
+	}
+
+	return msg, err
+}
+
+
 
 // AddRequest adds two numbers
 func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {

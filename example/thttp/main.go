@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"bitbucket.org/modfin/yarf/transport/tdecoraters"
 )
 
 func main() {
@@ -28,6 +29,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	simple.RunClient(clientTransport)
+	simple.RunClient(tdecoraters.ClientLogging(clientTransport))
 
 }

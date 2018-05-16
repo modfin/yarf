@@ -2,6 +2,14 @@ package yarf
 
 import (
 	"context"
+	"sync"
+)
+
+const (
+	initState = iota
+	execState
+	callState
+	respState
 )
 
 // NewClient create a new yarf client using a specific transporter
@@ -33,6 +41,7 @@ func (c *Client) Request(function string) *RPC {
 		function:    function,
 		requestMsg:  &Msg{},
 		responseMsg: &Msg{},
+		state:       initState,
 		done:        make(chan bool),
 	}
 }
@@ -42,6 +51,9 @@ type RPC struct {
 	client   *Client
 	function string
 	ctx      context.Context
+
+	mutex sync.Mutex
+	state int
 
 	requestMsg         *Msg
 	responseMsg        *Msg
@@ -58,61 +70,98 @@ type RPC struct {
 	isDone bool
 }
 
-// Content sets requests content
+// Content sets requests content, it does nothing if called after Exec()
 func (r *RPC) Content(requestData interface{}) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
 	r.requestMsg.SetContent(requestData)
 	return r
 }
 
-// BinaryContent sets requests content as a binary format and marshaling will not be preformed
+// BinaryContent sets requests content as a binary format and marshaling will not be preformed, it does nothing if called after Exec()
 func (r *RPC) BinaryContent(data []byte) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
 	r.requestMsg.SetBinaryContent(data)
 	return r
 }
 
-// WithContext sets context of request for outside control
+// WithContext sets context of request for outside control, it does nothing if called after Exec()
 func (r *RPC) WithContext(ctx context.Context) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
 	r.ctx = ctx
 	return r
 }
 
-// Callback sets a callback function that will be called on success or failure
-func (r *RPC) Callback(callback func(*Msg), errorCallback func(error)) *RPC {
+// WithCallback sets a callback function that will be called on success or failure, it does nothing if called after Exec()
+func (r *RPC) WithCallback(callback func(*Msg), errorCallback func(error)) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
 	r.callback = callback
 	r.errorCallback = errorCallback
 	return r
 }
 
-// SetChannel sets a channels that response and error will be passed to
-func (r *RPC) SetChannel(channel chan (*Msg), errorChannel chan (error)) *RPC {
-	r.channel = channel
-	r.errorChannel = errorChannel
-	return r
-}
+// UseChannels creates a chan *Msg and a chan error which can be used for a non blocking context.
+// The channels creaded is closed once the request is completed, it does nothing if called after Exec()
+func (r *RPC) UseChannels() *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
 
-// MkChannel creates channels that can be used if external onec is not required
-func (r *RPC) MkChannel() *RPC {
 	r.channel = make(chan *Msg)
 	r.errorChannel = make(chan error)
 	return r
 }
 
-// Bind will unmarshal response into interface passed into method
+// Bind will unmarshal response into interface passed into method, it does nothing if called after Exec()
 func (r *RPC) Bind(content interface{}) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
 	r.responseMsgContent = content
 	return r
 }
 
-// SetParam set a param that can be read by server side, like a query param in http requests
+// SetParam set a param that can be read by server side, like a query param in http requests, it does nothing if called after Exec()
 func (r *RPC) SetParam(key string, value interface{}) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
 
 	r.requestMsg.SetParam(key, value)
-
 	return r
 }
 
 // Exec perform rpc request
 func (r *RPC) Exec() *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.state = execState
 
 	if r.ctx == nil {
 		r.ctx = context.Background()
@@ -123,6 +172,7 @@ func (r *RPC) Exec() *RPC {
 
 	var reqBytes []byte
 	reqBytes, r.err = r.requestMsg.Marshal()
+
 	if r.err != nil {
 		cancel()
 		return r
@@ -143,11 +193,18 @@ func (r *RPC) Exec() *RPC {
 			}
 			cancel()
 			r.done <- true
-
+			close(r.done)
+			if r.errorChannel != nil {
+				close(r.errorChannel)
+			}
 		}()
+
+		r.state = callState
 
 		var respBytes []byte
 		respBytes, r.err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
+
+		r.state = respState
 
 		if r.err != nil {
 			return
@@ -171,6 +228,7 @@ func (r *RPC) Exec() *RPC {
 
 		if r.channel != nil {
 			r.channel <- r.responseMsg
+			close(r.channel)
 		}
 
 		if r.callback != nil {
@@ -188,8 +246,8 @@ func (r *RPC) Get() (*Msg, error) {
 	return r.responseMsg, r.err
 }
 
-// Channel returns channel associated with the request and is most likely to be used in conjunction with MkChannel()
-func (r *RPC) Channel() (channel chan (*Msg), errorChannel chan (error)) {
+// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec()
+func (r *RPC) Channels() (channel chan *Msg, errorChannel chan error) {
 	return r.channel, r.errorChannel
 }
 
@@ -201,7 +259,7 @@ func (r *RPC) Done() error {
 	return r.err
 }
 
-// Error return the error of the request, if any
+// Error return the error of the request, if any at the point of calling it.
 func (r *RPC) Error() error {
 	return r.err
 }

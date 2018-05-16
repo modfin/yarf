@@ -51,6 +51,8 @@ func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration
 
 // Call implements client side call of transporter
 func (n *NatsTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
+
+	// TODO if "Did not get messages in time nats: timeout" context does not seam to be canceled correctly after timeout ....
 	ctx, cancel := context.WithTimeout(ctx, n.timeout)
 	defer cancel()
 
