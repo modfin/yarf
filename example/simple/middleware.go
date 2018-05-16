@@ -5,24 +5,22 @@ import (
 	"fmt"
 )
 
-func PrintPre(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
+func printPre(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
-	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error{
+	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
 		fmt.Println(text)
 
 		err := next()
-
 
 		return err
 	}
 
 }
 
+func printPost(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
-func PrintPost(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
-
-	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error{
+	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
 		err := next()
 		fmt.Println(text)

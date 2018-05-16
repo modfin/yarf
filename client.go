@@ -23,10 +23,10 @@ func NewClient(t Transporter) Client {
 // Client is a struct wrapping a transporting layer and methods for using yarf
 type Client struct {
 	transporter Transporter
-	middleware []Middleware
+	middleware  []Middleware
 }
 
-
+// WithMiddleware adds middleware to client request for pre and post processing
 func (c *Client) WithMiddleware(middleware ...Middleware) {
 	c.middleware = append(c.middleware, middleware...)
 }
@@ -164,7 +164,7 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 }
 
 // Exec perform rpc request
-func (r *RPC) Exec(middleware...Middleware) *RPC {
+func (r *RPC) Exec(middleware ...Middleware) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.state = execState
@@ -177,7 +177,6 @@ func (r *RPC) Exec(middleware...Middleware) *RPC {
 
 	var cancel func()
 	r.ctx, cancel = context.WithCancel(r.ctx)
-
 
 	go func() {
 		r.mutex.Lock()
@@ -202,7 +201,7 @@ func (r *RPC) Exec(middleware...Middleware) *RPC {
 
 		r.state = callState
 
-		r.err = processMiddleware(r.requestMsg, r.responseMsg, func(request *Msg, response *Msg) error{
+		r.err = processMiddleware(r.requestMsg, r.responseMsg, func(request *Msg, response *Msg) error {
 
 			var reqBytes []byte
 			reqBytes, err := request.Marshal()

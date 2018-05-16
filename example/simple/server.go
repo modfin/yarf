@@ -103,7 +103,6 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 
 	//server.WithMiddleware(PrintPre("Server 1"), PrintPre("Server 2"), PrintPre("Server 3"))
 
-
 	print("Adding err handler")
 	server.Handle("err", err)
 

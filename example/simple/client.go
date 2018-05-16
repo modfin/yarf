@@ -73,7 +73,6 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 	case err = <-errChan:
 	}
 
-
 	return err
 }
 
