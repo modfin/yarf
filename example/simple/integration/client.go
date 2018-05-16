@@ -107,7 +107,6 @@ func GetTestErrors2(client yarf.Client, function func(client yarf.Client) (err e
 	}
 }
 
-
 // GetTestCat generates a Array param test for a specific client
 func GetTestCat(client yarf.Client, function func(client yarf.Client, arr ...string) (*yarf.Msg, error), arr ...string) func(t *testing.T) {
 	return func(t *testing.T) {
@@ -131,7 +130,6 @@ func GetTestCat(client yarf.Client, function func(client yarf.Client, arr ...str
 
 	}
 }
-
 
 // GetBenchmarkAdd generates a integer param benchmark for a specific client
 func GetBenchmarkAdd(client yarf.Client, i, j int) func(t *testing.B) {

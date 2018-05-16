@@ -2,11 +2,11 @@ package main
 
 import (
 	"bitbucket.org/modfin/yarf/example/simple"
+	"bitbucket.org/modfin/yarf/transport/tdecoraters"
 	"bitbucket.org/modfin/yarf/transport/thttp"
 	"fmt"
 	"os"
 	"time"
-	"bitbucket.org/modfin/yarf/transport/tdecoraters"
 )
 
 func main() {

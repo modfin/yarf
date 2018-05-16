@@ -36,7 +36,7 @@ func ErrorRequest2(client yarf.Client) (err error) {
 	return err
 }
 
-// ErrorChannelRequest shall return a simple error by using channels
+// Error2ChannelRequest shall return a simple error by using channels
 func Error2ChannelRequest(client yarf.Client) (err error) {
 	msgChan, errChan := client.Request("a.integration.rpc-err").
 		UseChannels().
@@ -58,11 +58,11 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 	errChan := make(chan error)
 
 	msgFunc := func(msg *yarf.Msg) {
-		msgChan<-msg
+		msgChan <- msg
 	}
-	errFunc :=	func(e error) {
-			errChan<-e
-		}
+	errFunc := func(e error) {
+		errChan <- e
+	}
 
 	client.Request("a.integration.rpc-err").
 		WithCallback(msgFunc, errFunc).
@@ -75,7 +75,6 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 
 	return err
 }
-
 
 // CatRequest concatenates an array of strings in a string
 func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
@@ -104,7 +103,6 @@ func CatChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
 }
 
-
 // CatCallbackRequest concatenates an array of strings in a string by using callbacks
 func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
@@ -112,10 +110,10 @@ func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	errChan := make(chan error)
 
 	msgFunc := func(msg *yarf.Msg) {
-		msgChan<-msg
+		msgChan <- msg
 	}
-	errFunc :=	func(e error) {
-		errChan<-e
+	errFunc := func(e error) {
+		errChan <- e
 	}
 
 	client.Request("a.integration.cat").
@@ -132,8 +130,6 @@ func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
 	return msg, err
 }
-
-
 
 // AddRequest adds two numbers
 func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
