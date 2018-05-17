@@ -1,45 +1,62 @@
-![Yarf](yarf.png "Yarf")
+[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/bitbucket.org/modfin/yarf)
+[![Go Report Card](https://goreportcard.com/badge/bitbucket.org/modfin/yarf)](https://goreportcard.com/report/bitbucket.org/modfin/yarf)
+[![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/labstack/echo/master/LICENSE)
+
+
+<!-- https://codecov.io -->
+<!-- Something ci -->
+
+<!-- ![Yarf](yarf.png "Yarf") -->
 
 # yarf - Yet Another RPC Framework 
-
+For simple comunication between services
 
 ## Motivation 
-There are a lot of rpc frameworks out there, so why one more. The simple answer is that may of them
- out there, such as gRPC, Twirp and so on did not fit our need. 
- They are often very opinionated, overly complex and 
- are in some cases much of a black box. 
+There are a few rpc frameworks out there, so why one more. The simple
+answer is that may of them out there, such as gRPC, Twirp and so on did
+not fit our need. They are often very opinionated, overly complex and
+are in some cases much of a black box trying to solve every problem in
+many languages.
+
+What we found was that we were writing models i protobuf to be used in
+frameworks such as gRPC and then on both client and server side had to
+map them into local structs since protobuf was not expresive enough.
+This instead of just having a versioned struct in a common kit repo
+or such. In essens fighting with the rpc libs we tired in order for it
+to work with our use cases.
 
 ## Overview
-Yarf is a rpc framework focusing on ease of use and clear options of how to use.
- It provides an 
+Yarf is a rpc framework focusing on ease of use and clear options of
+how to use.
 
 
 ## Features
 * Separation between protocol and transport
-* Support for synchronise calls
-* Support for callback functions
-* Support for channel retrieval
- 
+* Support for synchronise calls, channals and callbacks
+* Support for middleware on both client and server side
+* Support for context passing between client and server
+* Expressiv builder pattern fron client calls
+
 
 ## Supported transport layers
 * http
 * nats
 
 ## Quickstart
-See examples for more examples 
+See examples for more examples/simple
 
 ### Intallation
 ```
 go get bitbucket.org/modfin/yarf
-go get bitbucket.org/modfin/yarf/transport/thttp
+go get bitbucket.org/modfin/yarf/...
 ```
 
 ### Server
 ```go
 package main
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/transport/thttp"
+    "bitbucket.org/modfin/yarf"
+    "bitbucket.org/modfin/yarf/transport/thttp"
     "log"
 )
 func main(){
@@ -64,8 +81,8 @@ func main(){
 ```go
 package main
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/transport/thttp"
+    "bitbucket.org/modfin/yarf"
+    "bitbucket.org/modfin/yarf/transport/thttp"
     "log"
     "fmt"
 )
@@ -92,6 +109,12 @@ func main(){
 
 ```
 
+### Test
+`go test -v ./...`
+
+(NATS test might not work for bigger payload since a public server is
+used for integration testing)
+
 
 ## TODO
 * Testing
@@ -100,3 +123,9 @@ func main(){
   * Improving service discover on HTTP transport
   * Improving loadbalancing on HTTP transport
   * Support for http2 and tls transport
+* Middlewares
+  * Proper Logging
+  * Statistics and latency collection
+  * Circuit breakers
+  * Caching
+  * Authentictaion, JWT
