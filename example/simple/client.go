@@ -148,6 +148,14 @@ func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 		Get()
 }
 
+// AddAndDoubleWithMiddlewareRequest adds two numbers and doubling result by using middleware
+func AddAndDoubleWithMiddlewareRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
+	return client.Request("a.integration.add").
+		WithMiddleware(setValsMiddleware(i, j), doubleResMiddleware).
+		Exec().
+		Get()
+}
+
 // SubRequest subtracts j from i
 func SubRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 	return client.Request("a.integration.sub").

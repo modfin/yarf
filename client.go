@@ -61,6 +61,8 @@ type RPC struct {
 	mutex sync.Mutex
 	state int
 
+	middleware []Middleware
+
 	requestMsg         *Msg
 	responseMsg        *Msg
 	responseMsgContent interface{}
@@ -125,6 +127,12 @@ func (r *RPC) WithCallback(callback func(*Msg), errorCallback func(error)) *RPC 
 	return r
 }
 
+//WithMiddleware adds middleware to specific request.
+func (r *RPC) WithMiddleware(middleware ...Middleware) *RPC {
+	r.middleware = append(r.middleware, middleware...)
+	return r
+}
+
 // UseChannels creates a chan *Msg and a chan error which can be used for a non blocking context.
 // The channels creaded is closed once the request is completed, it does nothing if called after Exec()
 func (r *RPC) UseChannels() *RPC {
@@ -164,7 +172,7 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 }
 
 // Exec perform rpc request
-func (r *RPC) Exec(middleware ...Middleware) *RPC {
+func (r *RPC) Exec() *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.state = execState
@@ -201,40 +209,7 @@ func (r *RPC) Exec(middleware ...Middleware) *RPC {
 
 		r.state = callState
 
-		r.err = processMiddleware(r.requestMsg, r.responseMsg, func(request *Msg, response *Msg) error {
-
-			var reqBytes []byte
-			reqBytes, err := request.Marshal()
-
-			if err != nil {
-				return err
-			}
-
-			var respBytes []byte
-			respBytes, err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
-
-			if err != nil {
-				return err
-			}
-
-			err = response.Unmarshal(respBytes)
-			if err != nil {
-				return err
-			}
-
-			if s, ok := response.Status(); s >= 500 && ok {
-				err := RPCError{}
-				response.Bind(&err)
-				return err
-			}
-
-			if r.responseMsgContent != nil {
-				err = response.Bind(r.responseMsgContent)
-				return err
-			}
-
-			return nil
-		}, append(r.client.middleware, middleware...)...)
+		r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
 
 		r.state = respState
 
@@ -254,6 +229,43 @@ func (r *RPC) Exec(middleware ...Middleware) *RPC {
 	}()
 
 	return r
+}
+
+func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
+	return func(request *Msg, response *Msg) error {
+
+		var reqBytes []byte
+		reqBytes, err := request.Marshal()
+
+		if err != nil {
+			return err
+		}
+
+		var respBytes []byte
+		respBytes, err = r.client.transporter.Call(r.ctx, r.function, reqBytes)
+
+		if err != nil {
+			return err
+		}
+
+		err = response.Unmarshal(respBytes)
+		if err != nil {
+			return err
+		}
+
+		if s, ok := response.Status(); s >= 500 && ok {
+			err := RPCError{}
+			response.Bind(&err)
+			return err
+		}
+
+		if r.responseMsgContent != nil {
+			err = response.Bind(r.responseMsgContent)
+			return err
+		}
+
+		return nil
+	}
 }
 
 // Get wait for request to be done before returning with the resulting message

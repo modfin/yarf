@@ -2,14 +2,14 @@ package simple
 
 import (
 	"bitbucket.org/modfin/yarf"
-	"fmt"
 )
 
-func printPre(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
+func setValsMiddleware(i, j int) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
 	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
-		fmt.Println(text)
+		request.SetParam("val1", i)
+		request.SetParam("val2", j)
 
 		err := next()
 
@@ -18,14 +18,13 @@ func printPre(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf
 
 }
 
-func printPost(text string) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
+func doubleResMiddleware(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
+	err := next()
 
-	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
-
-		err := next()
-		fmt.Println(text)
-
+	if err != nil {
 		return err
 	}
-
+	i := response.Param("res").IntOr(0)
+	response.SetParam("res", i*2)
+	return nil
 }
