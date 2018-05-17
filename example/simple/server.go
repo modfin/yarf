@@ -101,20 +101,14 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
 
-	//server.WithMiddleware(PrintPre("Server 1"), PrintPre("Server 2"), PrintPre("Server 3"))
-
-	print("Adding err handler")
-	server.Handle("err", err)
+	print("Adding handler by func name")
+	server.HandleFunc(err)
+	server.HandleFunc(add)
+	server.HandleFunc(cat)
+	server.HandleFunc(sleep)
 
 	print("Adding rpc err handler")
 	server.Handle("rpc-err", rpcErr)
-
-	print("Adding add handler")
-	server.Handle("add", add)
-
-	server.Handle("cat", cat)
-
-	server.Handle("sleep", sleep)
 
 	print("Adding panic handler")
 	server.Handle("panic", func(req *yarf.Msg, resp *yarf.Msg) (err error) {

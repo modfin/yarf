@@ -26,6 +26,7 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("GetTestCatCallback", GetTestCat(client, simple.CatCallbackRequest, "a", "b", "c"))
 		t.Run("GetTestAdd", GetTestAdd(client, 5, 7))
 		t.Run("GetTestAddAndDoubleWithMiddleware", GetTestAddAndDoubleWithMiddleware(client, 5, 7))
+		t.Run("GetTestObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
 		t.Run("GetTestSub", GetTestSub(client, 33, 11))
 		t.Run("GetTestLen", GetTestLen(client, length))
 		t.Run("GetTestGen", GetTestGen(client, length))
@@ -195,6 +196,18 @@ func GetTestAddAndDoubleWithMiddleware(client yarf.Client, i, j int) func(t *tes
 
 		if 2*int64(i+j) != res.Param("res").IntOr(-1) {
 			t.Log("Got response", res.Param("res"), "expected", 2*int64(i+j))
+			t.Fail()
+		}
+	}
+}
+
+// GetTestObservedAdd adds two numbers and multiplys it by the num of observers
+func GetTestObservedAdd(client yarf.Client, i, j int, observers int) func(t *testing.T) {
+	return func(t *testing.T) {
+		res := simple.AddObserversRequest(client, i, j, observers)
+
+		if observers*(i+j) != res {
+			t.Log("Got response", res, "expected", observers*(i+j))
 			t.Fail()
 		}
 	}

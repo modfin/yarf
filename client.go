@@ -171,10 +171,15 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	return r
 }
 
-// Exec perform rpc request
+// Exec perform rpc request. Done(), Get() and Channels() will call Exec() if it has not been called "manually".
 func (r *RPC) Exec() *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+
+	if r.state != initState {
+		return r
+	}
+
 	r.state = execState
 
 	if r.ctx == nil {
@@ -268,19 +273,27 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 	}
 }
 
-// Get wait for request to be done before returning with the resulting message
+// Get wait for request to be done before returning with the resulting message. If Exec() has not been called, Get() will
+// call it.
 func (r *RPC) Get() (*Msg, error) {
 	r.Done()
 	return r.responseMsg, r.err
 }
 
-// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec()
+// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
+// Channels() will call UseChannel() and then Exec() if Exec() has not been called.
 func (r *RPC) Channels() (channel chan *Msg, errorChannel chan error) {
+	r.UseChannels()
+	r.Exec()
+
 	return r.channel, r.errorChannel
 }
 
-// Done waits until the rpc request is done and has returned a result
+// Done waits until the rpc request is done and has returned a result. Done will call Exec(), which performs the request,
+// if Exec() has not been called prior to Done being called
 func (r *RPC) Done() error {
+	r.Exec()
+
 	if !r.isDone {
 		r.isDone = <-r.done
 	}

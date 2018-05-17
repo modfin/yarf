@@ -21,10 +21,9 @@ func TimeoutRequest(ctx context.Context, client yarf.Client, sleepMS int) (err e
 // ErrorRequest shall return a simple error
 func ErrorRequest(client yarf.Client) (err error) {
 	tuple := Tuple{}
-	_, err = client.Request("a.integration.err").
-		Exec().
+	err = client.Request("a.integration.err").
 		Bind(&tuple).
-		Get()
+		Done()
 	return err
 }
 
@@ -96,8 +95,6 @@ func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 func CatChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	msgChan, errChan := client.Request("a.integration.cat").
 		SetParam("arr", arr).
-		UseChannels().
-		Exec().
 		Channels()
 
 	var err error
@@ -144,8 +141,39 @@ func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 	return client.Request("a.integration.add").
 		SetParam("val1", i).
 		SetParam("val2", j).
-		Exec().
 		Get()
+}
+
+// AddObserversRequest preforms a request that multiple observes
+func AddObserversRequest(client yarf.Client, i, j, observers int) int {
+	req := client.Request("a.integration.add").
+		SetParam("val1", i).
+		SetParam("val2", j)
+
+	getAndEmmit := func(request *yarf.RPC, channel chan<- int) {
+		msg, err := request.Get()
+		if err != nil {
+			channel <- 0
+		}
+		channel <- int(msg.Param("res").IntOr(0))
+
+	}
+
+	sumChan := make(chan int)
+
+	for m := 0; m < observers; m++ {
+		go getAndEmmit(req, sumChan)
+	}
+
+	sum := 0
+	for m := 0; m < observers; m++ {
+		select {
+		case n := <-sumChan:
+			sum += n
+		}
+	}
+
+	return sum
 }
 
 // AddAndDoubleWithMiddlewareRequest adds two numbers and doubling result by using middleware
@@ -275,7 +303,5 @@ func RunClient(clientTransport yarf.Transporter) {
 	}
 
 	fmt.Println(" Result ", l, "=", len(res.Content))
-
-	time.Sleep(2 * time.Second)
 
 }

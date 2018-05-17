@@ -44,10 +44,10 @@ func (s *Server) WithMiddleware(middleware ...Middleware) {
 
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"
 // e.g. my-namespace.Add, if a function named Add is passed into the function
-func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error) {
+func (s *Server) HandleFunc(handler func(request *Msg, response *Msg) error, middleware ...Middleware) {
 	parts := strings.Split(runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), ".")
 	function := parts[len(parts)-1]
-	s.Handle(function, handler)
+	s.Handle(function, handler, middleware...)
 }
 
 // Handle creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.function"
