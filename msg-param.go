@@ -1,5 +1,9 @@
 package yarf
 
+import (
+	"reflect"
+)
+
 //NewParam creates a new key value param from input
 func NewParam(key string, value interface{}) Param {
 	return Param{key, value}
@@ -45,8 +49,15 @@ func (m *Param) StringArr() ([]string, bool) {
 	if m.value == nil {
 		return nil, false
 	}
-	arr, ok := m.value.([]interface{})
+
 	var res []string
+	res, ok := m.value.([]string)
+	if ok {
+		return res, ok
+	}
+
+	arr, ok := m.value.([]interface{})
+
 	if !ok {
 		return res, ok
 	}
@@ -74,24 +85,35 @@ func (m *Param) StringArrOr(defaultTo []string) []string {
 
 // Int returns value as a int64, if possible
 func (m *Param) Int() (int64, bool) {
+	return toInt(m.value)
+}
 
-	if m.value == nil {
+func toInt(num interface{}) (int64, bool) {
+
+	if num == nil {
 		return 0, false
 	}
 
 	var i int64
-	var f float64
 	ok := false
 
-	switch m.value.(type) {
-	case int64:
-		i, ok = m.value.(int64)
+	switch num.(type) {
+	case int, int8, int16, int32, int64:
+		a := reflect.ValueOf(num).Int() // a has type int64
+		return a, true
+	case uint, uint8, uint16, uint32, uint64:
+		a := reflect.ValueOf(num).Uint() // a has type uint64
+		return int64(a), true
 	case float64:
-		f, ok = m.value.(float64)
-		i = int64(f)
+		f, ok := num.(float64)
+		return int64(f), ok
+	case float32:
+		f, ok := num.(float32)
+		return int64(f), ok
 	}
 
 	return i, ok
+
 }
 
 // IntOr returns value as a int64, otherwise the provided default

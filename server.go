@@ -2,6 +2,7 @@ package yarf
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"runtime"
 	"strings"
@@ -12,6 +13,7 @@ type Server struct {
 	transporter Transporter
 	namespace   string
 	middleware  []Middleware
+	serializer  Serializer
 }
 
 // NewServer creates a new server with a particular server and name space of functions provided
@@ -23,13 +25,14 @@ func NewServer(t Transporter, namespace ...string) Server {
 	} else {
 		s.namespace = ""
 	}
+	s.serializer = Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal}
 	return s
 }
 
 func toServerErrorFrom(err RPCError, response *Msg) (responseData []byte) {
 	response.SetStatus(err.Status)
 	response.SetContent(err)
-	responseData, _ = response.Marshal()
+	responseData, _ = response.doMarshal()
 	return responseData
 }
 
@@ -40,6 +43,11 @@ func toServerError(status int, response *Msg, errors ...string) (responseData []
 // WithMiddleware add middleware to all requests
 func (s *Server) WithMiddleware(middleware ...Middleware) {
 	s.middleware = append(s.middleware, middleware...)
+}
+
+// WithSerializer setts the serializer used for transport.
+func (s *Server) WithSerializer(serializer Serializer) {
+	s.serializer = serializer
 }
 
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"
@@ -59,10 +67,10 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 
 	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
-		req := Msg{}
-		resp := Msg{}
+		req := Msg{serializer: s.serializer}
+		resp := Msg{serializer: s.serializer}
 
-		err := req.Unmarshal(requestData)
+		err := req.doUnmarshal(requestData)
 		if err != nil {
 			return toServerError(StatusUnmarshalError, &resp, err.Error())
 		}
@@ -79,7 +87,7 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 			return toServerError(StatusHandlerError, &resp, err.Error())
 		}
 
-		responseData, err = resp.Marshal()
+		responseData, err = resp.doMarshal()
 
 		if err != nil {
 			return toServerError(StatusMarshalError, &resp, err.Error())

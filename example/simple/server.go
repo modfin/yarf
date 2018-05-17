@@ -4,8 +4,10 @@ import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -47,7 +49,6 @@ func sleep(req *yarf.Msg, resp *yarf.Msg) (err error) {
 }
 
 func err(req *yarf.Msg, resp *yarf.Msg) (err error) {
-
 	print(" Got request Error request")
 	return errors.New("this endpoint returns an error")
 }
@@ -96,7 +97,8 @@ func swapAndMultiply(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
-	print(" Got request cat")
+	print(" Got request cat", reflect.TypeOf(req.Param("arr").Value()))
+
 	arr := req.Param("arr").StringArrOr([]string{"No", "Data"})
 
 	res := ""
@@ -111,10 +113,16 @@ func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 // StartServer starts a integration server using provided yarf transport
 func StartServer(serverTransport yarf.Transporter, verbose bool) {
+	StartServerWithSerializer(serverTransport, verbose, yarf.Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal})
+}
+
+// StartServerWithSerializer starts a integration server using provided yarf transport and a specific Serializer
+func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, serializer yarf.Serializer) {
 	doPrint = verbose
 
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
+	server.WithSerializer(serializer)
 
 	print("Adding handler by func name")
 	server.HandleFunc(err)

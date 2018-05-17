@@ -2,9 +2,7 @@ package yarf
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 )
 
 // StatusOk rpc status ok
@@ -33,88 +31,41 @@ const HeaderFunction = "function"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
-	ctx context.Context
+	ctx        context.Context
+	serializer Serializer
 
 	Headers map[string]interface{}
-
 	Binary  bool
-	Content json.RawMessage
+	Content []byte
 }
 
-// Marshal marshals a Msg struct to its binary representation
-func (m *Msg) Marshal() (data []byte, err error) {
+func (m *Msg) doMarshal() (data []byte, err error) {
 
 	defer func() {
 		if err != nil {
-			fmt.Println("ERROR Unmarshal", err)
+			fmt.Println("ERROR yarf.Msg Marshal", err)
 		}
 	}()
 
-	var headerBytes []byte
-	var contentBytes []byte
-
-	headerBytes, err = json.Marshal(m.Headers)
-	contentBytes = m.Content
-
-	if err != nil {
-		fmt.Println("Ma", 1)
-		return nil, err
-	}
-
-	tmsg := &TMSG{
-		Binary:  &m.Binary,
-		Headers: headerBytes,
-		Content: contentBytes,
-	}
-
-	data, err = proto.Marshal(tmsg)
-
-	if err != nil {
-		fmt.Println("Ma", 2)
-		return nil, err
-	}
-
+	data, err = m.serializer.Marshal(m)
 	return
 
 }
 
-// Unmarshal unmarshal binary data to current Msg struct
-func (m *Msg) Unmarshal(data []byte) (err error) {
-
+func (m *Msg) doUnmarshal(data []byte) (err error) {
 	defer func() {
 		if err != nil {
-			fmt.Println("ERROR Unmarshal", err)
+			fmt.Println("ERROR yarf.Msg Unmarshal", err)
 		}
 	}()
-
-	tmsg := &TMSG{}
-
-	if err = proto.Unmarshal(data, tmsg); err != nil {
-		fmt.Println("UnMa", 1)
-		return
-	}
-
-	m.Binary = *tmsg.Binary
-
-	headerBytes := tmsg.Headers
-	contentBytes := tmsg.Content
-
-	err = json.Unmarshal(headerBytes, &m.Headers)
-	if err != nil {
-		fmt.Println("UnMa", 3)
-		return
-	}
-
-	m.Content = contentBytes
-
+	err = m.serializer.Unmarshal(data, m)
 	return
-
 }
 
 // Bind is userd to unmarshal/bind contetnt data to input interface
 func (m *Msg) Bind(content interface{}) (err error) {
 
-	err = json.Unmarshal(m.Content, &content)
+	err = m.serializer.Unmarshal(m.Content, content)
 	if err != nil {
 		return err
 	}
@@ -124,9 +75,9 @@ func (m *Msg) Bind(content interface{}) (err error) {
 
 // Status returns the status header of the request, if one exist
 func (m *Msg) Status() (status int, ok bool) {
-	statusFloat, ok := m.Headers[HeaderStatus].(float64)
+	status64, ok := toInt(m.Headers[HeaderStatus])
 	if ok {
-		status = int(statusFloat)
+		status = int(status64)
 	}
 	return
 }
@@ -165,8 +116,14 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 
 // SetContent sets the input interface as the content of the message
 func (m *Msg) SetContent(content interface{}) *Msg {
-	m.Content, _ = json.Marshal(content)
+	var err error
+	m.Content, err = m.serializer.Marshal(content)
 	m.Binary = false
+
+	if err != nil {
+		fmt.Println("Could not set Content", err)
+	}
+
 	return m
 }
 

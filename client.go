@@ -2,6 +2,7 @@ package yarf
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 )
 
@@ -16,7 +17,7 @@ const (
 func NewClient(t Transporter) Client {
 	s := Client{}
 	s.transporter = t
-
+	s.serializer = Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal}
 	return s
 }
 
@@ -24,11 +25,17 @@ func NewClient(t Transporter) Client {
 type Client struct {
 	transporter Transporter
 	middleware  []Middleware
+	serializer  Serializer
 }
 
 // WithMiddleware adds middleware to client request for pre and post processing
 func (c *Client) WithMiddleware(middleware ...Middleware) {
 	c.middleware = append(c.middleware, middleware...)
+}
+
+// WithSerializer setts the serializer used for transport.
+func (c *Client) WithSerializer(serializer Serializer) {
+	c.serializer = serializer
 }
 
 // Call is a short hand performs a request from function name, and req param. The response is unmarshaled into resp
@@ -45,8 +52,8 @@ func (c *Client) Request(function string) *RPC {
 	return &RPC{
 		client:      c,
 		function:    function,
-		requestMsg:  &Msg{},
-		responseMsg: &Msg{},
+		requestMsg:  &Msg{serializer: c.serializer},
+		responseMsg: &Msg{serializer: c.serializer},
 		state:       builderState,
 		done:        make(chan bool),
 	}
@@ -259,7 +266,7 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 	return func(request *Msg, response *Msg) error {
 
 		var reqBytes []byte
-		reqBytes, err := request.Marshal()
+		reqBytes, err := request.doMarshal()
 
 		if err != nil {
 			return err
@@ -272,7 +279,7 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 			return err
 		}
 
-		err = response.Unmarshal(respBytes)
+		err = response.doUnmarshal(respBytes)
 		if err != nil {
 			return err
 		}
