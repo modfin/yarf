@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	initState = iota
-	execState
-	callState
-	respState
+	builderState = iota
+	transitState
+	requestState
+	responseState
 )
 
 // NewClient create a new yarf client using a specific transporter
@@ -47,12 +47,18 @@ func (c *Client) Request(function string) *RPC {
 		function:    function,
 		requestMsg:  &Msg{},
 		responseMsg: &Msg{},
-		state:       initState,
+		state:       builderState,
 		done:        make(chan bool),
 	}
 }
 
-// RPC represents a request to in yarf and is a builder
+// RPCTransit represents a request to in yarf when in transit and the purpose of it is to restricts the function that are
+// allowed to be called when the request in transit in order to expose internal state and what can be done.
+type RPCTransit struct {
+	rpc *RPC
+}
+
+// RPC represents a request to in yarf and is used to build a request using the builder pattern
 type RPC struct {
 	client   *Client
 	function string
@@ -82,7 +88,7 @@ type RPC struct {
 func (r *RPC) Content(requestData interface{}) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -94,7 +100,7 @@ func (r *RPC) Content(requestData interface{}) *RPC {
 func (r *RPC) BinaryContent(data []byte) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -106,7 +112,7 @@ func (r *RPC) BinaryContent(data []byte) *RPC {
 func (r *RPC) WithContext(ctx context.Context) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -118,7 +124,7 @@ func (r *RPC) WithContext(ctx context.Context) *RPC {
 func (r *RPC) WithCallback(callback func(*Msg), errorCallback func(error)) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -138,7 +144,7 @@ func (r *RPC) WithMiddleware(middleware ...Middleware) *RPC {
 func (r *RPC) UseChannels() *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -151,7 +157,7 @@ func (r *RPC) UseChannels() *RPC {
 func (r *RPC) Bind(content interface{}) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -163,7 +169,7 @@ func (r *RPC) Bind(content interface{}) *RPC {
 func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -175,7 +181,7 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 func (r *RPC) SetParams(params ...Param) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	if r.state != initState {
+	if r.state != builderState {
 		return r
 	}
 
@@ -184,16 +190,16 @@ func (r *RPC) SetParams(params ...Param) *RPC {
 	return r
 }
 
-// Exec perform rpc request. Done(), Get() and Channels() will call Exec() if it has not been called "manually".
-func (r *RPC) Exec() *RPC {
+// Exec perform rpc request and return a RPC transit struct. Done(), Get() and Channels() will call Exec() if it has not been called "manually".
+func (r *RPC) Exec() *RPCTransit {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if r.state != initState {
-		return r
+	if r.state != builderState {
+		return &RPCTransit{r}
 	}
 
-	r.state = execState
+	r.state = transitState
 
 	if r.ctx == nil {
 		r.ctx = context.Background()
@@ -225,11 +231,11 @@ func (r *RPC) Exec() *RPC {
 			}
 		}()
 
-		r.state = callState
+		r.state = requestState
 
 		r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
 
-		r.state = respState
+		r.state = responseState
 
 		if r.err != nil {
 			return
@@ -246,7 +252,7 @@ func (r *RPC) Exec() *RPC {
 
 	}()
 
-	return r
+	return &RPCTransit{r}
 }
 
 func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
@@ -293,6 +299,12 @@ func (r *RPC) Get() (*Msg, error) {
 	return r.responseMsg, r.err
 }
 
+// Get wait for request to be done before returning with the resulting message. If Exec() has not been called, Get() will
+// call it.
+func (r *RPCTransit) Get() (*Msg, error) {
+	return r.rpc.Get()
+}
+
 // Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
 // Channels() will call UseChannel() and then Exec() if Exec() has not been called.
 func (r *RPC) Channels() (<-chan *Msg, <-chan error) {
@@ -300,6 +312,12 @@ func (r *RPC) Channels() (<-chan *Msg, <-chan error) {
 	r.Exec()
 
 	return r.channel, r.errorChannel
+}
+
+// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
+// Channels() will call UseChannel() and then Exec() if Exec() has not been called.
+func (r *RPCTransit) Channels() (<-chan *Msg, <-chan error) {
+	return r.rpc.Channels()
 }
 
 // Done waits until the rpc request is done and has returned a result. Done will call Exec(), which performs the request,
@@ -313,7 +331,18 @@ func (r *RPC) Done() error {
 	return r.err
 }
 
+// Done waits until the rpc request is done and has returned a result. Done will call Exec(), which performs the request,
+// if Exec() has not been called prior to Done being called
+func (r *RPCTransit) Done() error {
+	return r.rpc.Done()
+}
+
 // Error return the error of the request, if any at the point of calling it.
 func (r *RPC) Error() error {
 	return r.err
+}
+
+// Error return the error of the request, if any at the point of calling it.
+func (r *RPCTransit) Error() error {
+	return r.rpc.Error()
 }
