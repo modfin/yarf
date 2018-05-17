@@ -79,6 +79,21 @@ func add(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	return nil
 }
 
+func swapAndMultiply(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	t := Tuple{}
+
+	multiplier := int(req.Param("multiplier").IntOr(1))
+	err = req.Bind(&t)
+
+	tmp := t.Val1
+	t.Val1 = t.Val2 * multiplier
+	t.Val2 = tmp * multiplier
+	resp.SetContent(t)
+
+	return
+}
+
 func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 	print(" Got request cat")
@@ -106,6 +121,7 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 	server.HandleFunc(add)
 	server.HandleFunc(cat)
 	server.HandleFunc(sleep)
+	server.HandleFunc(swapAndMultiply)
 
 	print("Adding rpc err handler")
 	server.Handle("rpc-err", rpcErr)

@@ -195,6 +195,21 @@ func (m *Msg) SetParam(key string, value interface{}) *Msg {
 	return m
 }
 
+// SetParams params in the params header of the message. Which later provides helper methods of de/serializations and defaults.
+func (m *Msg) SetParams(params ...Param) *Msg {
+	if m.Headers == nil {
+		m.Headers = map[string]interface{}{}
+	}
+	if m.Headers["params"] == nil {
+		m.Headers["params"] = map[string]interface{}{}
+	}
+
+	for _, param := range params {
+		m.Headers["params"].(map[string]interface{})[param.key] = param.value
+	}
+	return m
+}
+
 //Param receives a param from the params header, it is wrapped in a param struct which implements helper methods in how to access params.
 func (m *Msg) Param(key string) *Param {
 	p := Param{key: key}

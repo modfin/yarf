@@ -1,5 +1,10 @@
 package yarf
 
+//NewParam creates a new key value param from input
+func NewParam(key string, value interface{}) Param {
+	return Param{key, value}
+}
+
 //Param is a key/value entry and a struct which implements helper methods to help with retrial of data types from value.
 type Param struct {
 	key   string

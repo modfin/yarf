@@ -31,12 +31,12 @@ func (c *Client) WithMiddleware(middleware ...Middleware) {
 	c.middleware = append(c.middleware, middleware...)
 }
 
-// Call performs a request from function name, and req param. The response is unmarshaled to resp
-func (c *Client) Call(function string, req interface{}, resp interface{}) error {
+// Call is a short hand performs a request from function name, and req param. The response is unmarshaled into resp
+func (c *Client) Call(function string, requestData interface{}, responseData interface{}, requestParams ...Param) error {
 	return c.Request(function).
-		Content(req).
-		Bind(resp).
-		Exec().
+		SetParams(requestParams...).
+		Content(requestData).
+		Bind(responseData).
 		Done()
 }
 
@@ -171,6 +171,19 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	return r
 }
 
+// SetParams set params provided that can be read by server side, like a query param in http requests, it does nothing if called after Exec()
+func (r *RPC) SetParams(params ...Param) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != initState {
+		return r
+	}
+
+	r.requestMsg.SetParams(params...)
+
+	return r
+}
+
 // Exec perform rpc request. Done(), Get() and Channels() will call Exec() if it has not been called "manually".
 func (r *RPC) Exec() *RPC {
 	r.mutex.Lock()
@@ -282,7 +295,7 @@ func (r *RPC) Get() (*Msg, error) {
 
 // Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
 // Channels() will call UseChannel() and then Exec() if Exec() has not been called.
-func (r *RPC) Channels() (channel chan *Msg, errorChannel chan error) {
+func (r *RPC) Channels() (<-chan *Msg, <-chan error) {
 	r.UseChannels()
 	r.Exec()
 

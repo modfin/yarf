@@ -28,6 +28,7 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("GetTestAddAndDoubleWithMiddleware", GetTestAddAndDoubleWithMiddleware(client, 5, 7))
 		t.Run("GetTestObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
 		t.Run("GetTestSub", GetTestSub(client, 33, 11))
+		t.Run("GetTestSwap", GetTestSwap(client, simple.Tuple{Val1: 1, Val2: 2}, 3))
 		t.Run("GetTestLen", GetTestLen(client, length))
 		t.Run("GetTestGen", GetTestGen(client, length))
 		t.Run("GetTestCopy", GetTestCopy(client, length))
@@ -226,6 +227,24 @@ func GetTestAdd(client yarf.Client, i, j int) func(t *testing.T) {
 
 		if int64(i+j) != res.Param("res").IntOr(-1) {
 			t.Log("Got response", res.Param("res"), "expected", int64(i+j))
+			t.Fail()
+		}
+	}
+}
+
+// GetTestSwap generates test for swaping values in a tuple
+func GetTestSwap(client yarf.Client, tuple simple.Tuple, multiplier int) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.SwapAndMultiplyRequest(client, tuple, multiplier)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		if tuple.Val1*multiplier != res.Val2 && tuple.Val2*multiplier != res.Val1 {
+			t.Log("Got response", res, "expected", simple.Tuple{Val1: tuple.Val2, Val2: tuple.Val1})
 			t.Fail()
 		}
 	}

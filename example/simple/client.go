@@ -192,6 +192,19 @@ func SubRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 		Get()
 }
 
+// SwapAndMultiplyRequest swap places on values in tuple
+func SwapAndMultiplyRequest(client yarf.Client, tuple Tuple, multiplier int) (res Tuple, err error) {
+
+	err = client.Call(
+		"a.integration.swapAndMultiply",
+		tuple,
+		&res,
+		yarf.NewParam("multiplier", multiplier),
+		yarf.NewParam("Something else", nil),
+	)
+	return
+}
+
 // LenRequest returns the length of an array
 func LenRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 	arr := make([]byte, len)
