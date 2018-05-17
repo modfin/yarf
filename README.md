@@ -3,10 +3,9 @@
 [![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/labstack/echo/master/LICENSE)
 
 
-<!-- https://codecov.io -->
-<!-- Something ci -->
-
-<!-- ![Yarf](yarf.png "Yarf") -->
+[comment]: ( https://codecov.io )
+[comment]: ( Something ci )
+[comment]: ( ![Yarf](yarf.png "Yarf") )
 
 # yarf - Yet Another RPC Framework 
 For simple comunication between services
