@@ -25,6 +25,12 @@ func (m *Param) Value() interface{} {
 	return m.value
 }
 
+
+// String returns value as a string, if possible
+func (m *Param) IsNil() (bool) {
+	return m.value == nil
+}
+
 // String returns value as a string, if possible
 func (m *Param) String() (string, bool) {
 	if m.value == nil {
@@ -97,6 +103,7 @@ func toInt(num interface{}) (int64, bool) {
 	var i int64
 	ok := false
 
+	// TODO maybe remove reflection
 	switch num.(type) {
 	case int, int8, int16, int32, int64:
 		a := reflect.ValueOf(num).Int() // a has type int64
@@ -125,6 +132,7 @@ func toFloat(num interface{}) (float64, bool) {
 	var i float64
 	ok := false
 
+	// TODO maybe remove reflection
 	switch num.(type) {
 	case int, int8, int16, int32, int64:
 		a := reflect.ValueOf(num).Int() // a has type int64
