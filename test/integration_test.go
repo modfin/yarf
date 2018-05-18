@@ -5,6 +5,7 @@ import (
 	"bitbucket.org/modfin/yarf/serializer/json"
 	"bitbucket.org/modfin/yarf/serializer/msgpack"
 	"testing"
+	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
 )
 
 var transportTable = []struct {
@@ -13,7 +14,7 @@ var transportTable = []struct {
 	extra bool
 }{
 	{"HTTP", CreateHTTP, true},
-	{"Nats", CreateNats, false},
+	{"NATS", CreateNats, false},
 }
 
 func TestTransport(t *testing.T) {
@@ -37,6 +38,7 @@ var serializerTable = []struct {
 }{
 	{"MSG_PACK", msgpack.Serializer()},
 	{"JSON", json.Serializer()},
+	{"JSON_ITERATOR", jsoniterator.Serializer()},
 }
 
 func TestSerializer(t *testing.T) {
