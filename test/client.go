@@ -1,4 +1,4 @@
-package integration
+package test
 
 import (
 	"bitbucket.org/modfin/yarf"
@@ -12,27 +12,41 @@ import (
 // GetIntegrationTest generates a integration test for a specific client
 func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 
-	length := 2 * 1000000 // 2 mb
-
 	return func(t *testing.T) {
-		t.Run("GetTestContextTimeout", GetTestContextTimeout(client))
-		t.Run("GetTestErrors", GetTestErrors(client))
-		t.Run("GetTestErrors2", GetTestErrors2(client, simple.ErrorRequest2))
-		t.Run("GetTestErrors2Channel", GetTestErrors2(client, simple.Error2ChannelRequest))
-		t.Run("GetTestErrors2Callback", GetTestErrors2(client, simple.Error2CallbackRequest))
-		t.Run("GetTestPanic", GetTestPanic(client, simple.PanicRequest))
-		t.Run("GetTestCat", GetTestCat(client, simple.CatRequest, "a", "b", "c"))
-		t.Run("GetTestCatChannel", GetTestCat(client, simple.CatChannelRequest, "a", "b", "c"))
-		t.Run("GetTestCatCallback", GetTestCat(client, simple.CatCallbackRequest, "a", "b", "c"))
-		t.Run("GetTestAdd", GetTestAdd(client, 5, 7))
-		t.Run("GetTestAddAndDoubleWithMiddleware", GetTestAddAndDoubleWithMiddleware(client, 5, 7))
-		t.Run("GetTestObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
-		t.Run("GetTestSub", GetTestSub(client, 33, 11))
-		t.Run("GetTestSwap", GetTestSwap(client, simple.Tuple{Val1: 1, Val2: 2}, 3))
+		t.Run("ContextTimeout", GetTestContextTimeout(client))
+		t.Run("Errors", GetTestErrors(client))
+		t.Run("Errors2", GetTestErrors2(client, simple.ErrorRequest2))
+		t.Run("Errors2Channel", GetTestErrors2(client, simple.Error2ChannelRequest))
+		t.Run("Errors2Callback", GetTestErrors2(client, simple.Error2CallbackRequest))
+		t.Run("Panic", GetTestPanic(client, simple.PanicRequest))
+		t.Run("Cat", GetTestCat(client, simple.CatRequest, "a", "b", "c"))
+		t.Run("CatChannel", GetTestCat(client, simple.CatChannelRequest, "a", "b", "c"))
+		t.Run("CatCallback", GetTestCat(client, simple.CatCallbackRequest, "a", "b", "c"))
+		t.Run("XOR", GetTestXOR(client, []bool{true, true, true}, []bool{true, false, true}, []bool{false, true, false}))
+		t.Run("Sum", GetTestSum(client, []int{3, 5, 7}))
+		t.Run("SumFloat", GetTestSumFloat(client, []float64{3.2, 5.3, 7.4}))
+		t.Run("SumFloat32", GetTestSumFloat32(client, []float32{3.1, 5.0, 7.1}))
+		t.Run("Add", GetTestAdd(client, 5, 7))
+		t.Run("AddFloat", GetTestAddFloat(client, 5.2, 7.3))
+		t.Run("AddFloat32", GetTestAddFloat32(client, 5.2, 7.3))
+		t.Run("AddAndDoubleWithMiddleware", GetTestAddAndDoubleWithMiddleware(client, 5, 7))
+		t.Run("ObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
+		t.Run("Sub", GetTestSub(client, 33, 11))
+		t.Run("Swap", GetTestSwap(client, simple.Tuple{Val1: 1, Val2: 2}, 3))
+		//t.Run("GetTestLen", GetTestLen(client, length))
+		//t.Run("GetTestGen", GetTestGen(client, length))
+		//t.Run("GetTestCopy", GetTestCopy(client, length))
+
+	}
+}
+
+// GetExtraIntegrationTest generates a integration test for a specific client with large payloads
+func GetExtraIntegrationTest(client yarf.Client) func(t *testing.T) {
+	length := 2 * 1000000 // 2 mb
+	return func(t *testing.T) {
 		t.Run("GetTestLen", GetTestLen(client, length))
 		t.Run("GetTestGen", GetTestGen(client, length))
 		t.Run("GetTestCopy", GetTestCopy(client, length))
-
 	}
 }
 
@@ -214,6 +228,42 @@ func GetTestObservedAdd(client yarf.Client, i, j int, observers int) func(t *tes
 	}
 }
 
+// GetTestAddFloat generates a float param test for a specific client
+func GetTestAddFloat(client yarf.Client, i, j float64) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.AddFloatRequest(client, i, j)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		if i+j != res.Param("res").FloatOr(-1.0) {
+			t.Log("Got response", res.Param("res"), "expected", i+j)
+			t.Fail()
+		}
+	}
+}
+
+// GetTestAddFloat32 generates a float param test for a specific client
+func GetTestAddFloat32(client yarf.Client, i, j float32) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.AddFloat32Request(client, i, j)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		if float64(i+j) != res.Param("res").FloatOr(-1.0) {
+			t.Log("Got response", res.Param("res"), "expected", i+j)
+			t.Fail()
+		}
+	}
+}
+
 // GetTestAdd generates a integer param test for a specific client
 func GetTestAdd(client yarf.Client, i, j int) func(t *testing.T) {
 	return func(t *testing.T) {
@@ -227,6 +277,105 @@ func GetTestAdd(client yarf.Client, i, j int) func(t *testing.T) {
 
 		if int64(i+j) != res.Param("res").IntOr(-1) {
 			t.Log("Got response", res.Param("res"), "expected", int64(i+j))
+			t.Fail()
+		}
+	}
+}
+
+// GetTestXOR sums a integer array
+func GetTestXOR(client yarf.Client, arr0 []bool, arr1 []bool, expected []bool) func(t *testing.T) {
+	return func(t *testing.T) {
+		msg, err := simple.XORRequest(client, arr0, arr1)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		res, ok := msg.Param("res").BoolArr()
+
+		if !ok {
+			t.Log("did not get an array")
+			t.Fail()
+			return
+		}
+
+		for i := range expected {
+			if res[i] != expected[i] {
+				t.Log("Got response", res, "expected", expected)
+				t.Fail()
+			}
+		}
+
+	}
+}
+
+// GetTestSum sums a integer array
+func GetTestSum(client yarf.Client, arr []int) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.SumRequest(client, arr)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		var acc int
+		for _, i := range arr {
+			acc += i
+		}
+
+		if int64(acc) != res.Param("res").IntOr(-1) {
+			t.Log("Got response", res.Param("res"), "expected", acc)
+			t.Fail()
+		}
+	}
+}
+
+// GetTestSumFloat sums a float array
+func GetTestSumFloat(client yarf.Client, arr []float64) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.SumFloatRequest(client, arr)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		var acc float64
+		for _, i := range arr {
+			acc += i
+		}
+
+		if acc != res.Param("res").FloatOr(-1.0) {
+			t.Log("Got response", res.Param("res"), "expected", acc)
+			t.Fail()
+		}
+	}
+}
+
+// GetTestSumFloat32 sums a float array
+func GetTestSumFloat32(client yarf.Client, arr []float32) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.SumFloat32Request(client, arr)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		var acc float32
+		for _, i := range arr {
+			acc += i
+		}
+
+		got := float32(res.Param("res").FloatOr(-1.0))
+		if acc != got {
+			t.Log("Got response", got, "expected", acc)
 			t.Fail()
 		}
 	}

@@ -1,6 +1,7 @@
 package yarf
 
 import "context"
+import pack "github.com/vmihailenco/msgpack"
 
 // Transporter is the interface that must be fulfilled for a transporter.
 type Transporter interface {
@@ -22,4 +23,11 @@ type ListenTransporter interface {
 type Serializer struct {
 	Marshal   func(v interface{}) ([]byte, error)
 	Unmarshal func(data []byte, v interface{}) error
+}
+
+func defaultSerializer() Serializer {
+	return Serializer{
+		Marshal:   func(v interface{}) ([]byte, error) { return pack.Marshal(v) },
+		Unmarshal: func(data []byte, v interface{}) error { return pack.Unmarshal(data, v) },
+	}
 }

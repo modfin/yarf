@@ -2,7 +2,6 @@ package yarf
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"runtime"
 	"strings"
@@ -10,14 +9,14 @@ import (
 
 // Server represents a yarf server with a particular transporter
 type Server struct {
-	transporter Transporter
+	transporter ListenTransporter
 	namespace   string
 	middleware  []Middleware
 	serializer  Serializer
 }
 
 // NewServer creates a new server with a particular server and name space of functions provided
-func NewServer(t Transporter, namespace ...string) Server {
+func NewServer(t ListenTransporter, namespace ...string) Server {
 	s := Server{}
 	s.transporter = t
 	if len(namespace) > 0 {
@@ -25,7 +24,7 @@ func NewServer(t Transporter, namespace ...string) Server {
 	} else {
 		s.namespace = ""
 	}
-	s.serializer = Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal}
+	s.serializer = defaultSerializer()
 	return s
 }
 

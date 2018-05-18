@@ -2,7 +2,6 @@ package yarf
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 )
 
@@ -14,16 +13,16 @@ const (
 )
 
 // NewClient create a new yarf client using a specific transporter
-func NewClient(t Transporter) Client {
+func NewClient(t CallTransporter) Client {
 	s := Client{}
 	s.transporter = t
-	s.serializer = Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal}
+	s.serializer = defaultSerializer()
 	return s
 }
 
 // Client is a struct wrapping a transporting layer and methods for using yarf
 type Client struct {
-	transporter Transporter
+	transporter CallTransporter
 	middleware  []Middleware
 	serializer  Serializer
 }
@@ -86,9 +85,10 @@ type RPC struct {
 	channel      chan *Msg
 	errorChannel chan error
 
-	err    error
-	done   chan bool
-	isDone bool
+	err       error
+	done      chan bool
+	isDone    bool
+	doneMutex sync.Mutex
 }
 
 // Content sets requests content, it does nothing if called after Exec()
@@ -332,9 +332,12 @@ func (r *RPCTransit) Channels() (<-chan *Msg, <-chan error) {
 func (r *RPC) Done() error {
 	r.Exec()
 
+	r.doneMutex.Lock()
 	if !r.isDone {
 		r.isDone = <-r.done
 	}
+	r.doneMutex.Unlock()
+
 	return r.err
 }
 

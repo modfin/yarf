@@ -80,6 +80,138 @@ func add(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	return nil
 }
 
+func sum(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request sum")
+	arr := req.Param("arr")
+
+	v1, ok := arr.IntArr()
+	if !ok {
+		return errors.New("could arr not cast to []int64")
+	}
+
+	var acc int64
+	for _, n := range v1 {
+		acc += n
+	}
+
+	resp.SetParam("res", acc)
+
+	return nil
+}
+
+func xor(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request sum")
+	arr0 := req.Param("arr0")
+	arr1 := req.Param("arr1")
+
+	x, ok := arr0.BoolArr()
+	if !ok {
+		return errors.New("could arr not cast to []bool")
+	}
+
+	y, ok := arr1.BoolArr()
+	if !ok {
+		return errors.New("could arr not cast to []bool")
+	}
+
+	if len(x) != len(y) {
+		return errors.New("arrays are not the same size")
+	}
+
+	res := make([]bool, len(x))
+	for i := range x {
+		res[i] = (x[i] || y[i]) && !(x[i] && y[i])
+	}
+
+	resp.SetParam("res", res)
+
+	return nil
+}
+
+func sumFloat(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request sum")
+	arr := req.Param("arr")
+
+	v1, ok := arr.FloatArr()
+	if !ok {
+		return errors.New("could arr not cast to []float64")
+	}
+
+	var acc float64
+	for _, n := range v1 {
+		acc += n
+	}
+
+	resp.SetParam("res", acc)
+
+	return nil
+}
+
+func sumFloat32(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request sum")
+	arr := req.Param("arr")
+
+	v1, ok := arr.FloatArr()
+	if !ok {
+		return errors.New("could arr not cast to []float64")
+	}
+
+	var acc float32
+	for _, n := range v1 {
+		acc += float32(n)
+	}
+
+	resp.SetParam("res", acc)
+
+	return nil
+}
+
+func addFloat(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request Add")
+	val1 := req.Param("val1")
+	val2 := req.Param("val2")
+
+	v1, ok := val1.Float()
+	if !ok {
+		return errors.New("could v1 not cast to int")
+	}
+
+	v2, ok := val2.Float()
+	if !ok {
+		return errors.New("could v2 not cast to int")
+	}
+
+	resp.SetParam("res", v1+v2)
+
+	return nil
+}
+
+func addFloat32(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	print(" Got request Add")
+	val1 := req.Param("val1")
+	val2 := req.Param("val2")
+
+	v1, ok := val1.Float()
+	if !ok {
+		return errors.New("could v1 not cast to int")
+	}
+
+	v2, ok := val2.Float()
+	if !ok {
+		return errors.New("could v2 not cast to int")
+	}
+
+	resp.SetParam("res", v1+v2)
+
+	return nil
+}
+
 func swapAndMultiply(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 	t := Tuple{}
@@ -117,16 +249,23 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 }
 
 // StartServerWithSerializer starts a integration server using provided yarf transport and a specific Serializer
-func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, serializer yarf.Serializer) {
+func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, serializer yarf.Serializer, midware ...yarf.Middleware) {
 	doPrint = verbose
 
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
 	server.WithSerializer(serializer)
+	server.WithMiddleware(midware...)
 
 	print("Adding handler by func name")
 	server.HandleFunc(err)
 	server.HandleFunc(add)
+	server.HandleFunc(addFloat)
+	server.HandleFunc(addFloat32)
+	server.HandleFunc(xor)
+	server.HandleFunc(sum)
+	server.HandleFunc(sumFloat)
+	server.HandleFunc(sumFloat32)
 	server.HandleFunc(cat)
 	server.HandleFunc(sleep)
 	server.HandleFunc(swapAndMultiply)

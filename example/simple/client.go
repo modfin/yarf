@@ -136,6 +136,51 @@ func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	return msg, err
 }
 
+// SumRequest sums an integer array
+func SumRequest(client yarf.Client, arr []int) (*yarf.Msg, error) {
+	return client.Request("a.integration.sum").
+		SetParam("arr", arr).
+		Get()
+}
+
+// SumFloatRequest sums an float array
+func SumFloatRequest(client yarf.Client, arr []float64) (*yarf.Msg, error) {
+	return client.Request("a.integration.sumFloat").
+		SetParam("arr", arr).
+		Get()
+}
+
+// SumFloat32Request sums an float array
+func SumFloat32Request(client yarf.Client, arr []float32) (*yarf.Msg, error) {
+	return client.Request("a.integration.sumFloat32").
+		SetParam("arr", arr).
+		Get()
+}
+
+// XORRequest xors 2 arrays
+func XORRequest(client yarf.Client, arr0 []bool, arr1 []bool) (*yarf.Msg, error) {
+	return client.Request("a.integration.xor").
+		SetParam("arr0", arr0).
+		SetParam("arr1", arr1).
+		Get()
+}
+
+// AddFloat32Request adds two float numbers
+func AddFloat32Request(client yarf.Client, i, j float32) (*yarf.Msg, error) {
+	return client.Request("a.integration.addFloat32").
+		SetParam("val1", i).
+		SetParam("val2", j).
+		Get()
+}
+
+// AddFloatRequest adds two float numbers
+func AddFloatRequest(client yarf.Client, i, j float64) (*yarf.Msg, error) {
+	return client.Request("a.integration.addFloat").
+		SetParam("val1", i).
+		SetParam("val2", j).
+		Get()
+}
+
 // AddRequest adds two numbers
 func AddRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 	return client.Request("a.integration.add").

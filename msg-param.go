@@ -116,6 +116,34 @@ func toInt(num interface{}) (int64, bool) {
 
 }
 
+func toFloat(num interface{}) (float64, bool) {
+
+	if num == nil {
+		return 0, false
+	}
+
+	var i float64
+	ok := false
+
+	switch num.(type) {
+	case int, int8, int16, int32, int64:
+		a := reflect.ValueOf(num).Int() // a has type int64
+		return float64(a), true
+	case uint, uint8, uint16, uint32, uint64:
+		a := reflect.ValueOf(num).Uint() // a has type uint64
+		return float64(a), true
+	case float64:
+		f, ok := num.(float64)
+		return float64(f), ok
+	case float32:
+		f, ok := num.(float32)
+		return float64(f), ok
+	}
+
+	return i, ok
+
+}
+
 // IntOr returns value as a int64, otherwise the provided default
 func (m *Param) IntOr(def int64) int64 {
 	i, ok := m.Int()
@@ -130,20 +158,29 @@ func (m *Param) IntArr() ([]int64, bool) {
 	if m.value == nil {
 		return nil, false
 	}
-	arr, ok := m.value.([]interface{})
 	var res []int64
+	res, ok := m.value.([]int64)
+
+	if ok {
+		return res, ok
+	}
+
+	arr, ok := m.value.([]interface{})
+
 	if !ok {
 		return res, ok
 	}
+
 	res = make([]int64, len(arr))
 	ok = true
 	for i, val := range arr {
 		var o bool
-		res[i], o = val.(int64)
+		res[i], o = toInt(val)
 		if !o {
 			ok = false
 		}
 	}
+
 	return res, ok
 }
 
@@ -163,8 +200,7 @@ func (m *Param) Float() (float64, bool) {
 		return 0.0, false
 	}
 
-	i, ok := m.value.(float64)
-	return i, ok
+	return toFloat(m.value)
 }
 
 // FloatOr returns value as a float64, otherwise the provided default
@@ -181,8 +217,16 @@ func (m *Param) FloatArr() ([]float64, bool) {
 	if m.value == nil {
 		return nil, false
 	}
-	arr, ok := m.value.([]interface{})
+
 	var res []float64
+	res, ok := m.value.([]float64)
+
+	if ok {
+		return res, ok
+	}
+
+	arr, ok := m.value.([]interface{})
+
 	if !ok {
 		return res, ok
 	}
@@ -190,7 +234,7 @@ func (m *Param) FloatArr() ([]float64, bool) {
 	ok = true
 	for i, val := range arr {
 		var o bool
-		res[i], o = val.(float64)
+		res[i], o = toFloat(val)
 		if !o {
 			ok = false
 		}
@@ -232,8 +276,16 @@ func (m *Param) BoolArr() ([]bool, bool) {
 	if m.value == nil {
 		return nil, false
 	}
-	arr, ok := m.value.([]interface{})
+
 	var res []bool
+	res, ok := m.value.([]bool)
+
+	if ok {
+		return res, ok
+	}
+
+	arr, ok := m.value.([]interface{})
+
 	if !ok {
 		return res, ok
 	}
