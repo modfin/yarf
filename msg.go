@@ -26,6 +26,9 @@ const StatusUnmarshalError = 551
 // HeaderStatus is the status header param name
 const HeaderStatus = "status"
 
+// HeaderUUID is the uuid header param name
+const HeaderUUID = "status"
+
 // HeaderFunction is the function name header param name
 const HeaderFunction = "function"
 
@@ -82,16 +85,22 @@ func (m *Msg) Status() (status int, ok bool) {
 	return
 }
 
+// SetStatus sets the statues header of the message
+func (m *Msg) SetStatus(code int) *Msg {
+	m.SetHeader(HeaderStatus, code)
+	return m
+}
+
 // Function returns the function name being called, if one exist
 func (m *Msg) Function() (status string, ok bool) {
 	status, ok = m.Headers[HeaderFunction].(string)
 	return
 }
 
-// SetStatus sets the statues header of the message
-func (m *Msg) SetStatus(code int) *Msg {
-	m.SetHeader(HeaderStatus, code)
-	return m
+// UUID returns the request uuid
+func (m *Msg) UUID() (status string, ok bool) {
+	status, ok = m.Headers[HeaderUUID].(string)
+	return
 }
 
 // Ok sets the status header to 200

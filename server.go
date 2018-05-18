@@ -75,6 +75,8 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 		}
 		req.ctx = ctx
 
+		resp.SetHeader(HeaderUUID, req.Headers[HeaderUUID])
+
 		err = processMiddleware(&req, &resp, handler, append(s.middleware, middleware...)...)
 
 		if err != nil {

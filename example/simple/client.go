@@ -2,6 +2,7 @@ package simple
 
 import (
 	"bitbucket.org/modfin/yarf"
+	"bitbucket.org/modfin/yarf/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -283,6 +284,8 @@ func RunClient(clientTransport yarf.Transporter) {
 
 	fmt.Println("Creating client")
 	client := yarf.NewClient(clientTransport)
+
+	client.WithMiddleware(middleware.OpenTracing("Client> "))
 
 	//client.WithMiddleware(PrintPre("Client 1"), PrintPre("Client 2"), PrintPre("Client 3"))
 

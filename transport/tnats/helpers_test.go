@@ -6,17 +6,15 @@ import (
 
 func TestMin(t *testing.T) {
 
-
-	if min(1,2) != 1 {
+	if min(1, 2) != 1 {
 		t.Fail()
 	}
 
-	if min(1,-2) != -2 {
+	if min(1, -2) != -2 {
 		t.Fail()
 	}
 
 }
-
 
 func TestIntToBytes(t *testing.T) {
 

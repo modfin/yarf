@@ -25,9 +25,8 @@ func (m *Param) Value() interface{} {
 	return m.value
 }
 
-
-// String returns value as a string, if possible
-func (m *Param) IsNil() (bool) {
+// IsNil returns true if value is nil
+func (m *Param) IsNil() bool {
 	return m.value == nil
 }
 

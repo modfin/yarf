@@ -3,8 +3,8 @@ package simple
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
+	"bitbucket.org/modfin/yarf/serializer/msgpack"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -245,7 +245,7 @@ func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 // StartServer starts a integration server using provided yarf transport
 func StartServer(serverTransport yarf.Transporter, verbose bool) {
-	StartServerWithSerializer(serverTransport, verbose, yarf.Serializer{Marshal: json.Marshal, Unmarshal: json.Unmarshal})
+	StartServerWithSerializer(serverTransport, verbose, msgpack.Serializer())
 }
 
 // StartServerWithSerializer starts a integration server using provided yarf transport and a specific Serializer

@@ -2,6 +2,7 @@ package yarf
 
 import (
 	"context"
+	"github.com/satori/go.uuid"
 	"sync"
 )
 
@@ -140,6 +141,17 @@ func (r *RPC) WithCallback(callback func(*Msg), errorCallback func(error)) *RPC 
 	return r
 }
 
+// WithUUID sets the uuid for the request enabling tracing of requests
+func (r *RPC) WithUUID(uuid string) *RPC {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if r.state != builderState {
+		return r
+	}
+	r.requestMsg.SetHeader(HeaderUUID, uuid)
+	return r
+}
+
 //WithMiddleware adds middleware to specific request.
 func (r *RPC) WithMiddleware(middleware ...Middleware) *RPC {
 	r.middleware = append(r.middleware, middleware...)
@@ -212,10 +224,17 @@ func (r *RPC) Exec() *RPCTransit {
 		r.ctx = context.Background()
 	}
 
-	r.requestMsg.SetHeader(HeaderFunction, r.function)
-
 	var cancel func()
 	r.ctx, cancel = context.WithCancel(r.ctx)
+
+	r.requestMsg.ctx = r.ctx
+
+	r.requestMsg.SetHeader(HeaderFunction, r.function)
+
+	if suuid, ok := r.requestMsg.UUID(); suuid == "" || !ok {
+		v4, _ := uuid.NewV4()
+		r.requestMsg.SetHeader(HeaderUUID, v4.String())
+	}
 
 	go func() {
 		r.mutex.Lock()

@@ -3,9 +3,9 @@ package test
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/serializer/json"
+	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
 	"bitbucket.org/modfin/yarf/serializer/msgpack"
 	"testing"
-	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
 )
 
 var transportTable = []struct {
