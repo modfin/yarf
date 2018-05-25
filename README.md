@@ -34,7 +34,9 @@ how to use.
 * Support for synchronise calls, channals and callbacks
 * Support for middleware on both client and server side
 * Support for context passing between client and server
+* Support for Custom serializing, both of protocol and content level.
 * Expressiv builder pattern fron client calls
+* Client and server Middleware
 
 
 ## Supported transport layers
@@ -78,8 +80,8 @@ func main(){
 
     server.HandleFunc(SHA256)
     server.Handle("add", func(req *yarf.Msg, resp *yarf.Msg) (err error){
-    
-        resp.SetParam("res", req.Param("val1").IntOr(0)+req.Param("val2").IntOr(0))
+        res := req.Param("val1").IntOr(0)+req.Param("val2").IntOr(0)
+        resp.SetParam("res", res)
         return nil
     })
 
@@ -113,9 +115,7 @@ func main(){
     if err != nil{
         log.Fatal(err)
     }
-    
     fmt.Println(" Result of 5 + 7 =", res.Param("res").IntOr(-1))
-
 
 
     msg, err = client.Request("a.namespace.SHA256").
@@ -127,16 +127,14 @@ func main(){
     }
 
     hash, ok := msg.Param("hash").String()
-
 }
 
 ```
 
 ### Test
 `go test -v ./...`
+`./test.sh`, docker is requierd to run integration tests
 
-(NATS test might not work for bigger payload since a public server is
-used for integration testing)
 
 
 ## TODO

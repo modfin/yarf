@@ -137,8 +137,6 @@ func CatLateChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error)
 	case err = <-errChan:
 	}
 
-	//fmt.Println("LATE CHANNEL", msg, err, msgChan, errChan )
-
 	return msg, err
 
 }

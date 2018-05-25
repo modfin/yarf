@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+    "encoding/binary"
 )
 
 // StatusOk rpc status ok
@@ -47,14 +48,47 @@ type Msg struct {
 	Content []byte
 }
 
+
+func intToBytes(i int) []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, uint32(i))
+	return bytes
+}
+
+func bytesToInt(b []byte) int {
+	return int(binary.LittleEndian.Uint32(b))
+}
+
 func (m *Msg) doMarshal() (data []byte, err error) {
-	data, err = m.serializer.Marshal(m)
+	contentType := []byte(m.serializer.ContentType)
+	contentTypeLen := len(contentType)
+	contentTypeLenBytes := intToBytes(contentTypeLen)
+	intLen := 4
+	
+	content, err := m.serializer.Marshal(m)
+	contentLen := len(content)
+	
+	
+	data = make([]byte, 0, intLen+contentTypeLen+contentLen)
+	data = append(contentTypeLenBytes, contentType...)
+	data = append(data, content...)
+	
 	return
 
 }
 
 func (m *Msg) doUnmarshal(data []byte) (err error) {
-	err = m.serializer.Unmarshal(data, m)
+	intLen := 4
+	contentTypeLen := bytesToInt(data[:intLen])
+	contentType := string(data[intLen:contentTypeLen+intLen])
+
+	ser, ok := serializer(contentType)
+
+	if !ok {
+		return errors.New("could not find a suitable serializer")
+	}
+
+	err = ser.Unmarshal(data[contentTypeLen+intLen:], m)
 	return
 }
 
