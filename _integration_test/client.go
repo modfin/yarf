@@ -1,9 +1,12 @@
-package test
+package integration
 
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/example/simple"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"strings"
 	"testing"
 	"time"
@@ -33,20 +36,18 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("ObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
 		t.Run("Sub", GetTestSub(client, 33, 11))
 		t.Run("Swap", GetTestSwap(client, simple.Tuple{Val1: 1, Val2: 2}, 3))
-		//t.Run("GetTestLen", GetTestLen(client, length))
-		//t.Run("GetTestGen", GetTestGen(client, length))
-		//t.Run("GetTestCopy", GetTestCopy(client, length))
-
+		t.Run("SwapWithSerializer", GetTestSwapWithSerlizer(client, simple.Tuple{Val1: 1, Val2: 2}))
 	}
 }
 
 // GetExtraIntegrationTest generates a integration test for a specific client with large payloads
 func GetExtraIntegrationTest(client yarf.Client) func(t *testing.T) {
-	length := 2 * 1000000 // 2 mb
+	length := 4 * 1000000 // ~4 mb
 	return func(t *testing.T) {
 		t.Run("GetTestLen", GetTestLen(client, length))
 		t.Run("GetTestGen", GetTestGen(client, length))
 		t.Run("GetTestCopy", GetTestCopy(client, length))
+		t.Run("GetTestSHA256", GetTestSHA256(client, length))
 	}
 }
 
@@ -381,6 +382,24 @@ func GetTestSumFloat32(client yarf.Client, arr []float32) func(t *testing.T) {
 	}
 }
 
+// GetTestSwapWithSerlizer generates test for swaping values in a tuple using specific Json Sterilizer
+func GetTestSwapWithSerlizer(client yarf.Client, tuple simple.Tuple) func(t *testing.T) {
+	return func(t *testing.T) {
+		res, err := simple.SwapWithSerializer(client, tuple)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
+
+		if tuple.Val1 != res.Val2 && tuple.Val2 != res.Val1 {
+			t.Log("Got response", res, "expected", simple.Tuple{Val1: tuple.Val2, Val2: tuple.Val1})
+			t.Fail()
+		}
+	}
+}
+
 // GetTestSwap generates test for swaping values in a tuple
 func GetTestSwap(client yarf.Client, tuple simple.Tuple, multiplier int) func(t *testing.T) {
 	return func(t *testing.T) {
@@ -415,6 +434,37 @@ func GetTestSub(client yarf.Client, i, j int) func(t *testing.T) {
 			t.Fail()
 		}
 
+	}
+}
+
+// GetTestSHA256 generates 10 sha256 request up to len with random data
+func GetTestSHA256(client yarf.Client, length int) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		for i := 0; i < 10; i++ {
+
+			data := make([]byte, length/(10-i))
+			_, err := rand.Read(data)
+			if err != nil {
+				t.Log("Got err making random arr", err)
+				t.Fail()
+			}
+
+			hash := sha256.Sum256(data)
+			expected := base64.StdEncoding.EncodeToString(hash[:])
+
+			got, err := simple.SHA256Request(client, data)
+
+			if err != nil {
+				t.Log("Got err from request", got)
+				t.Fail()
+			}
+
+			if expected != got {
+				t.Log("Expected", expected, "But got", got)
+				t.Fail()
+			}
+		}
 	}
 }
 

@@ -3,8 +3,10 @@ package simple
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
+	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"time"
 )
@@ -14,7 +16,6 @@ func TimeoutRequest(ctx context.Context, client yarf.Client, sleepMS int) (err e
 	_, err = client.Request("a.integration.sleep").
 		WithContext(ctx).
 		SetParam("sleep", sleepMS).
-		Exec().
 		Get()
 	return err
 }
@@ -23,25 +24,20 @@ func TimeoutRequest(ctx context.Context, client yarf.Client, sleepMS int) (err e
 func ErrorRequest(client yarf.Client) (err error) {
 	tuple := Tuple{}
 	err = client.Request("a.integration.err").
-		Bind(&tuple).
+		BindResponseContent(&tuple).
 		Done()
 	return err
 }
 
 // ErrorRequest2 shall return a simple error
 func ErrorRequest2(client yarf.Client) (err error) {
-	_, err = client.Request("a.integration.rpc-err").
-		Exec().
-		Get()
+	_, err = client.Request("a.integration.rpc-err").Get()
 	return err
 }
 
 // Error2ChannelRequest shall return a simple error by using channels
 func Error2ChannelRequest(client yarf.Client) (err error) {
-	msgChan, errChan := client.Request("a.integration.rpc-err").
-		UseChannels().
-		Exec().
-		Channels()
+	msgChan, errChan := client.Request("a.integration.rpc-err").Channels()
 
 	select {
 	case <-msgChan:
@@ -64,9 +60,7 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 		errChan <- e
 	}
 
-	client.Request("a.integration.rpc-err").
-		WithCallback(msgFunc, errFunc).
-		Exec()
+	client.Request("a.integration.rpc-err").Callbacks(msgFunc, errFunc)
 
 	select {
 	case <-msgChan:
@@ -79,7 +73,6 @@ func Error2CallbackRequest(client yarf.Client) (err error) {
 // PanicRequest shall panic at the server side
 func PanicRequest(client yarf.Client) (err error) {
 	_, err = client.Request("a.integration.panic").
-		Exec().
 		Get()
 	return err
 }
@@ -88,8 +81,26 @@ func PanicRequest(client yarf.Client) (err error) {
 func CatRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	return client.Request("a.integration.cat").
 		SetParam("arr", arr).
-		Exec().
 		Get()
+}
+
+// SHA256Request sha256 data...
+func SHA256Request(client yarf.Client, data []byte) (string, error) {
+	msg, err := client.Request("a.integration.sha256").
+		WithBinaryContent(data).
+		Get()
+
+	if err != nil {
+		return "", err
+	}
+
+	hash, ok := msg.Param("hash").String()
+
+	if !ok {
+		return "", errors.New("Could not get hash param as string")
+	}
+
+	return hash, nil
 }
 
 // CatChannelRequest concatenates an array of strings in a string by using channels
@@ -124,8 +135,7 @@ func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
 	client.Request("a.integration.cat").
 		SetParam("arr", arr).
-		WithCallback(msgFunc, errFunc).
-		Exec()
+		Callbacks(msgFunc, errFunc)
 
 	var err error
 	var msg *yarf.Msg
@@ -226,15 +236,13 @@ func AddObserversRequest(client yarf.Client, i, j, observers int) int {
 func AddAndDoubleWithMiddlewareRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 	return client.Request("a.integration.add").
 		WithMiddleware(setValsMiddleware(i, j), doubleResMiddleware).
-		Exec().
 		Get()
 }
 
 // SubRequest subtracts j from i
 func SubRequest(client yarf.Client, i, j int) (*yarf.Msg, error) {
 	return client.Request("a.integration.sub").
-		Content(Tuple{i, j}).
-		Exec().
+		WithContent(Tuple{i, j}).
 		Get()
 }
 
@@ -251,12 +259,19 @@ func SwapAndMultiplyRequest(client yarf.Client, tuple Tuple, multiplier int) (re
 	return
 }
 
+// SwapWithSerializer swap places on values in tuple
+func SwapWithSerializer(client yarf.Client, tuple Tuple) (res Tuple, err error) {
+	return res, client.Request("a.integration.swapWithSerializer").
+		WithContentUsing(tuple, jsoniterator.Serializer()).
+		BindResponseContentUsing(&res, jsoniterator.Serializer()).
+		Done()
+}
+
 // LenRequest returns the length of an array
 func LenRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 	arr := make([]byte, len)
 	return client.Request("a.integration.len").
-		BinaryContent(arr).
-		Exec().
+		WithBinaryContent(arr).
 		Get()
 }
 
@@ -264,7 +279,6 @@ func LenRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 func GenRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 	return client.Request("a.integration.gen").
 		SetParam("len", len).
-		Exec().
 		Get()
 }
 
@@ -272,8 +286,7 @@ func GenRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 func CopyRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 	arr := make([]byte, len)
 	return client.Request("a.integration.copy").
-		BinaryContent(arr).
-		Exec().
+		WithBinaryContent(arr).
 		Get()
 }
 

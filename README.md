@@ -96,7 +96,6 @@ func main(){
     res, err := client.Request("a.namespace.add").
         SetParam("val1", 5).
         SetParam("val2", 7).
-        Exec().
         Get()
     
     if err != nil{

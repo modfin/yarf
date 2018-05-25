@@ -3,8 +3,11 @@ package simple
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
+	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
 	"bitbucket.org/modfin/yarf/serializer/msgpack"
 	"context"
+	hashing "crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"reflect"
@@ -217,12 +220,33 @@ func swapAndMultiply(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	t := Tuple{}
 
 	multiplier := int(req.Param("multiplier").IntOr(1))
-	err = req.Bind(&t)
+	err = req.BindContent(&t)
 
 	tmp := t.Val1
 	t.Val1 = t.Val2 * multiplier
 	t.Val2 = tmp * multiplier
 	resp.SetContent(t)
+
+	return
+}
+
+func sha256(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	hash := hashing.Sum256(req.Content)
+	resp.SetParam("hash",
+		base64.StdEncoding.EncodeToString(hash[:]))
+	return
+}
+
+func swapWithSerializer(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+	t := Tuple{}
+	err = req.BindContentUsing(&t, jsoniterator.Serializer())
+
+	tmp := t.Val1
+	t.Val1 = t.Val2
+	t.Val2 = tmp
+	resp.SetContentUsing(t, jsoniterator.Serializer())
 
 	return
 }
@@ -269,6 +293,8 @@ func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, s
 	server.HandleFunc(cat)
 	server.HandleFunc(sleep)
 	server.HandleFunc(swapAndMultiply)
+	server.HandleFunc(swapWithSerializer)
+	server.HandleFunc(sha256)
 
 	print("Adding rpc err handler")
 	server.Handle("rpc-err", rpcErr)
@@ -282,7 +308,7 @@ func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, s
 	server.Handle("sub", func(req *yarf.Msg, resp *yarf.Msg) (err error) {
 		print(" Got request Sub")
 		var t Tuple
-		err = req.Bind(&t)
+		err = req.BindContent(&t)
 		if err != nil {
 			return errors.New("could not bind to model")
 		}

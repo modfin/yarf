@@ -42,20 +42,21 @@ func (c *Client) WithSerializer(serializer Serializer) {
 func (c *Client) Call(function string, requestData interface{}, responseData interface{}, requestParams ...Param) error {
 	return c.Request(function).
 		SetParams(requestParams...).
-		Content(requestData).
-		Bind(responseData).
+		WithContent(requestData).
+		BindResponseContent(responseData).
 		Done()
 }
 
 // Request creates a request builder in yarf
 func (c *Client) Request(function string) *RPC {
 	return &RPC{
-		client:      c,
-		function:    function,
-		requestMsg:  &Msg{serializer: c.serializer},
-		responseMsg: &Msg{serializer: c.serializer},
-		state:       builderState,
-		done:        make(chan bool),
+		client:                       c,
+		function:                     function,
+		requestMsg:                   &Msg{serializer: c.serializer},
+		responseMsg:                  &Msg{serializer: c.serializer},
+		responseMsgContentSerializer: c.serializer,
+		state: builderState,
+		done:  make(chan bool),
 	}
 }
 
@@ -76,14 +77,15 @@ type RPC struct {
 
 	middleware []Middleware
 
-	requestMsg         *Msg
-	responseMsg        *Msg
-	responseMsgContent interface{}
+	requestMsg                   *Msg
+	responseMsg                  *Msg
+	responseMsgContent           interface{}
+	responseMsgContentSerializer Serializer
 
 	callback      func(*Msg)
 	errorCallback func(error)
 
-	channel      chan *Msg
+	msgChannel   chan *Msg
 	errorChannel chan error
 
 	err       error
@@ -92,20 +94,25 @@ type RPC struct {
 	doneMutex sync.Mutex
 }
 
-// Content sets requests content, it does nothing if called after Exec()
-func (r *RPC) Content(requestData interface{}) *RPC {
+// WithContent sets requests content, it does nothing if called after exec()
+func (r *RPC) WithContent(requestData interface{}) *RPC {
+	return r.WithContentUsing(requestData, r.client.serializer)
+}
+
+// WithContentUsing sets requests content with a specific serializer, it does nothing if called after exec()
+func (r *RPC) WithContentUsing(requestData interface{}, serializer Serializer) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {
 		return r
 	}
 
-	r.requestMsg.SetContent(requestData)
+	r.requestMsg.SetContentUsing(requestData, serializer)
 	return r
 }
 
-// BinaryContent sets requests content as a binary format and marshaling will not be preformed, it does nothing if called after Exec()
-func (r *RPC) BinaryContent(data []byte) *RPC {
+// WithBinaryContent sets requests content as a binary format and marshaling will not be preformed, it does nothing if called after exec()
+func (r *RPC) WithBinaryContent(data []byte) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {
@@ -116,7 +123,7 @@ func (r *RPC) BinaryContent(data []byte) *RPC {
 	return r
 }
 
-// WithContext sets context of request for outside control, it does nothing if called after Exec()
+// WithContext sets context of request for outside control, it does nothing if called after exec()
 func (r *RPC) WithContext(ctx context.Context) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -125,19 +132,6 @@ func (r *RPC) WithContext(ctx context.Context) *RPC {
 	}
 
 	r.ctx = ctx
-	return r
-}
-
-// WithCallback sets a callback function that will be called on success or failure, it does nothing if called after Exec()
-func (r *RPC) WithCallback(callback func(*Msg), errorCallback func(error)) *RPC {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	if r.state != builderState {
-		return r
-	}
-
-	r.callback = callback
-	r.errorCallback = errorCallback
 	return r
 }
 
@@ -158,33 +152,24 @@ func (r *RPC) WithMiddleware(middleware ...Middleware) *RPC {
 	return r
 }
 
-// UseChannels creates a chan *Msg and a chan error which can be used for a non blocking context.
-// The channels creaded is closed once the request is completed, it does nothing if called after Exec()
-func (r *RPC) UseChannels() *RPC {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	if r.state != builderState {
-		return r
-	}
-
-	r.channel = make(chan *Msg)
-	r.errorChannel = make(chan error)
-	return r
+// BindResponseContent will unmarshal response into interface passed into method, it does nothing if called after exec()
+func (r *RPC) BindResponseContent(content interface{}) *RPC {
+	return r.BindResponseContentUsing(content, r.client.serializer)
 }
 
-// Bind will unmarshal response into interface passed into method, it does nothing if called after Exec()
-func (r *RPC) Bind(content interface{}) *RPC {
+// BindResponseContentUsing will unmarshal response into interface passed into method using a specific serializer, it does nothing if called after exec()
+func (r *RPC) BindResponseContentUsing(content interface{}, serializer Serializer) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {
 		return r
 	}
-
 	r.responseMsgContent = content
+	r.responseMsgContentSerializer = serializer
 	return r
 }
 
-// SetParam set a param that can be read by server side, like a query param in http requests, it does nothing if called after Exec()
+// SetParam set a param that can be read by server side, like a query param in http requests, it does nothing if called after exec()
 func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -196,7 +181,7 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	return r
 }
 
-// SetParams set params provided that can be read by server side, like a query param in http requests, it does nothing if called after Exec()
+// SetParams set params provided that can be read by server side, like a query param in http requests, it does nothing if called after exec()
 func (r *RPC) SetParams(params ...Param) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -209,8 +194,8 @@ func (r *RPC) SetParams(params ...Param) *RPC {
 	return r
 }
 
-// Exec perform rpc request and return a RPC transit struct. Done(), Get() and Channels() will call Exec() if it has not been called "manually".
-func (r *RPC) Exec() *RPCTransit {
+// exec perform rpc request and return a RPC transit struct. Done(), Get() and Channels() will call exec() if it has not been called "manually".
+func (r *RPC) exec() *RPCTransit {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -267,9 +252,9 @@ func (r *RPC) Exec() *RPCTransit {
 			return
 		}
 
-		if r.channel != nil {
-			r.channel <- r.responseMsg
-			close(r.channel)
+		if r.msgChannel != nil {
+			r.msgChannel <- r.responseMsg
+			close(r.msgChannel)
 		}
 
 		if r.callback != nil {
@@ -305,12 +290,12 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 
 		if s, ok := response.Status(); s >= 500 && ok {
 			err := RPCError{}
-			response.Bind(&err)
+			response.BindContent(&err)
 			return err
 		}
 
 		if r.responseMsgContent != nil {
-			err = response.Bind(r.responseMsgContent)
+			err = response.BindContentUsing(r.responseMsgContent, r.responseMsgContentSerializer)
 			return err
 		}
 
@@ -318,38 +303,69 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 	}
 }
 
-// Get wait for request to be done before returning with the resulting message. If Exec() has not been called, Get() will
+// Async returns a performs the request and return a transit object.
+func (r *RPC) Async() *RPCTransit {
+	return r.exec()
+}
+
+// Get wait for request to be done before returning with the resulting message. If exec() has not been called, Get() will
 // call it.
 func (r *RPC) Get() (*Msg, error) {
 	r.Done()
 	return r.responseMsg, r.err
 }
 
-// Get wait for request to be done before returning with the resulting message. If Exec() has not been called, Get() will
+// Get wait for request to be done before returning with the resulting message. If exec() has not been called, Get() will
 // call it.
 func (r *RPCTransit) Get() (*Msg, error) {
 	return r.rpc.Get()
 }
 
-// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
-// Channels() will call UseChannel() and then Exec() if Exec() has not been called.
+// Channels returns msgChannel associated with the request
+// Channels() will call UseChannel() and then exec() if exec() has not been called.
 func (r *RPC) Channels() (<-chan *Msg, <-chan error) {
-	r.UseChannels()
-	r.Exec()
 
-	return r.channel, r.errorChannel
+	r.mutex.Lock()
+
+	if r.state != builderState {
+		r.mutex.Unlock()
+		return r.msgChannel, r.errorChannel
+	}
+
+	r.msgChannel = make(chan *Msg)
+	r.errorChannel = make(chan error)
+
+	r.mutex.Unlock()
+	r.exec()
+
+	return r.msgChannel, r.errorChannel
 }
 
-// Channels returns channel associated with the request, these are created if UseChannels() is called before Exec().
-// Channels() will call UseChannel() and then Exec() if Exec() has not been called.
+// Channels returns msgChannel associated with the request, these are created if UseChannels() is called before exec().
+// Channels() will call UseChannel() and then exec() if exec() has not been called.
 func (r *RPCTransit) Channels() (<-chan *Msg, <-chan error) {
 	return r.rpc.Channels()
 }
 
-// Done waits until the rpc request is done and has returned a result. Done will call Exec(), which performs the request,
-// if Exec() has not been called prior to Done being called
+// Callbacks sets a callback function that will be called on success or failure, it does nothing if called after exec()
+func (r *RPC) Callbacks(callback func(*Msg), errorCallback func(error)) *RPCTransit {
+	r.mutex.Lock()
+	if r.state != builderState {
+		r.mutex.Unlock()
+		return &RPCTransit{r}
+	}
+
+	r.callback = callback
+	r.errorCallback = errorCallback
+
+	r.mutex.Unlock()
+	return r.exec()
+}
+
+// Done waits until the rpc request is done and has returned a result. Done will call exec(), which performs the request,
+// if exec() has not been called prior to Done being called
 func (r *RPC) Done() error {
-	r.Exec()
+	r.exec()
 
 	r.doneMutex.Lock()
 	if !r.isDone {
@@ -360,8 +376,8 @@ func (r *RPC) Done() error {
 	return r.err
 }
 
-// Done waits until the rpc request is done and has returned a result. Done will call Exec(), which performs the request,
-// if Exec() has not been called prior to Done being called
+// Done waits until the rpc request is done and has returned a result. Done will call exec(), which performs the request,
+// if exec() has not been called prior to Done being called
 func (r *RPCTransit) Done() error {
 	return r.rpc.Done()
 }

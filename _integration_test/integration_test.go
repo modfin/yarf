@@ -1,4 +1,4 @@
-package test
+package integration
 
 import (
 	"bitbucket.org/modfin/yarf"
@@ -17,21 +17,6 @@ var transportTable = []struct {
 	{"NATS", CreateNats, false},
 }
 
-func TestTransport(t *testing.T) {
-
-	for _, tran := range transportTable {
-		client, stop := tran.start(msgpack.Serializer())
-		t.Run(tran.name, GetIntegrationTest(client))
-
-		if tran.extra {
-			t.Run(tran.name+"/LARGE_PAYLOAD", GetExtraIntegrationTest(client))
-		}
-
-		stop()
-	}
-
-}
-
 var serializerTable = []struct {
 	name       string
 	serializer yarf.Serializer
@@ -41,13 +26,19 @@ var serializerTable = []struct {
 	{"JSON_ITERATOR", jsoniterator.Serializer()},
 }
 
-func TestSerializer(t *testing.T) {
+func TestMatrix(t *testing.T) {
 
 	for _, ser := range serializerTable {
-		client, stop := CreateHTTP(ser.serializer)
-		t.Run(ser.name, GetIntegrationTest(client))
-		t.Run(ser.name+"/LARGE_PAYLOAD", GetExtraIntegrationTest(client))
-		stop()
+		for _, tran := range transportTable {
+
+			client, stop := tran.start(ser.serializer)
+			t.Run(tran.name+"/"+ser.name, GetIntegrationTest(client))
+
+			t.Run(tran.name+"/"+ser.name+"/LARGE_PAYLOAD", GetExtraIntegrationTest(client))
+
+			stop()
+
+		}
 	}
 
 }

@@ -28,6 +28,7 @@ func NewNatsTransporter(servers string, timeout time.Duration, opts ...nats.Opti
 	}
 
 	nc, err := nats.Connect(servers, opts...)
+
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +50,18 @@ func NewNatsTransporterFromConn(natsConnection *nats.Conn, timeout time.Duration
 	return &t, nil
 }
 
+// Close the nats transporter and the nats client
+func (n *NatsTransporter) Close() error {
+	n.client.Close()
+	return nil
+}
+
 // Call implements client side call of transporter
 func (n *NatsTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
+
+	if n.client.IsClosed() {
+		return nil, errors.New("nats transporter has been closed")
+	}
 
 	// TODO if "Did not get messages in time nats: timeout" context does not seam to be canceled correctly after timeout ....
 	ctx, cancel := context.WithTimeout(ctx, n.timeout)
@@ -78,7 +89,6 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 
 // Listen defines the function that will handle yarf requests
 func (n *NatsTransporter) Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) error {
-
 	function = n.namespace + function
 	_, err := n.client.Subscribe(function, func(m *nats.Msg) {
 

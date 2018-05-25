@@ -62,46 +62,43 @@ func (n *NatsTransporter) sendMultipart(channel string, data []byte) (err error)
 	contentLen := payloadSize - headerSize
 	frames := totalLen/contentLen + 1
 
-	waitChan := make(chan bool)
-	errorChan := make(chan error)
+	doneChan := make(chan bool, frames)
+	errorChan := make(chan error, frames)
+	defer func() {
+		close(doneChan)
+		close(errorChan)
+	}()
 
 	for frame := 0; frame < frames; frame++ {
 
 		start := frame * contentLen
 		end := min(start+contentLen, totalLen)
 
-		headers := make([]byte, 0, headerSize)
-		headers = append(headers, intToBytes(totalLen)...)
-		headers = append(headers, intToBytes(start)...)
-		headers = append(headers, intToBytes(end)...)
-		headers = append(headers, intToBytes(frame)...)
-		headers = append(headers, intToBytes(frames)...)
+		packet := make([]byte, 0, headerSize+len(data[start:end]))
+		packet = append(packet, intToBytes(totalLen)...)
+		packet = append(packet, intToBytes(start)...)
+		packet = append(packet, intToBytes(end)...)
+		packet = append(packet, intToBytes(frame)...)
+		packet = append(packet, intToBytes(frames)...)
 
-		go func() {
-			err = n.client.Publish(
-				channel,
-				append(headers, data[start:end]...))
-			if err != nil {
-				errorChan <- err
+		packet = append(packet, data[start:end]...)
+
+		go func(c string, p []byte) {
+			err2 := n.client.Publish(c, p)
+			if err2 != nil {
+				errorChan <- err2
 			} else {
-				waitChan <- true
+				doneChan <- true
 			}
-		}()
 
-		if err != nil {
-			fmt.Println(1, err)
-			return err
-		}
+		}(channel, packet)
 	}
 
 	for frame := 0; frame < frames; frame++ {
 		select {
-		case <-waitChan:
-		case <-errorChan:
-			if err != nil {
-				fmt.Println(2, err)
-				return err
-			}
+		case <-doneChan:
+		case err = <-errorChan:
+			return err
 		}
 	}
 

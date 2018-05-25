@@ -65,10 +65,15 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 	return
 }
 
-// Bind is userd to unmarshal/bind contetnt data to input interface
-func (m *Msg) Bind(content interface{}) (err error) {
+// BindContent is used to unmarshal/bind content data to input interface
+func (m *Msg) BindContent(content interface{}) (err error) {
+	return m.BindContentUsing(content, m.serializer)
+}
 
-	err = m.serializer.Unmarshal(m.Content, content)
+// BindContentUsing is used to unmarshal/bind content data to input interface
+func (m *Msg) BindContentUsing(content interface{}, serializer Serializer) (err error) {
+
+	err = serializer.Unmarshal(m.Content, content)
 	if err != nil {
 		return err
 	}
@@ -125,14 +130,22 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 
 // SetContent sets the input interface as the content of the message
 func (m *Msg) SetContent(content interface{}) *Msg {
-	var err error
-	m.Content, err = m.serializer.Marshal(content)
+	m.SetContentUsing(content, m.serializer)
 	m.Binary = false
+	return m
+}
+
+// SetContentUsing serializes the content with a specific serializer and sets it as a binary payload
+func (m *Msg) SetContentUsing(content interface{}, serializer Serializer) *Msg {
+	var err error
+
+	m.SetHeader("content-type", serializer.ContentType)
+	m.Content, err = serializer.Marshal(content)
+	m.Binary = true
 
 	if err != nil {
-		fmt.Println("Could not set Content", err)
+		fmt.Println("Could not set WithContent", err)
 	}
-
 	return m
 }
 

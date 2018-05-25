@@ -2,8 +2,7 @@ package middleware
 
 import (
 	"bitbucket.org/modfin/yarf"
-	"fmt"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"time"
 )
@@ -13,11 +12,7 @@ func OpenTracing(prefix string) func(request *yarf.Msg, response *yarf.Msg, next
 
 	return func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {
 
-		funcname, ok := request.Function()
-
-		if !ok {
-			fmt.Println("not ok...")
-		}
+		funcname, _ := request.Function()
 
 		start := time.Now()
 

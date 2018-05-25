@@ -1,4 +1,4 @@
-package test
+package integration
 
 import (
 	"bitbucket.org/modfin/yarf"
@@ -6,7 +6,6 @@ import (
 	"bitbucket.org/modfin/yarf/transport/thttp"
 	"bitbucket.org/modfin/yarf/transport/tnats"
 	"fmt"
-	"golang.org/x/net/context"
 	"os"
 	"time"
 )
@@ -25,7 +24,7 @@ func CreateHTTP(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware)
 	go serverTransport.Start()
 	time.Sleep(200 * time.Millisecond)
 
-	clientTransport, err := thttp.NewHTTPTransporter(thttp.Options{Discovery: &thttp.DiscoveryDNSA{Host: "127.0.0.1"}})
+	clientTransport, err := thttp.NewHTTPTransporter(thttp.Options{Discovery: &thttp.DiscoveryDNSA{Host: "localhost"}})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -34,16 +33,14 @@ func CreateHTTP(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware)
 	client = yarf.NewClient(clientTransport)
 	client.WithSerializer(serializer)
 
-	return client, func() {
-		serverTransport.Stop(context.Background())
-	}
+	return client, func() { serverTransport.Close() }
 }
 
 // CreateNats returns a setup using Nats as transport
 func CreateNats(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware) (client yarf.Client, stop func()) {
 
 	fmt.Println("Creating server transport")
-	serverTransport, err := tnats.NewNatsTransporter("nats://demo.nats.io:4222", 10*time.Second)
+	serverTransport, err := tnats.NewNatsTransporter("nats://localhost:4222", 10*time.Second)
 
 	if err != nil {
 		fmt.Println(err)
@@ -53,13 +50,14 @@ func CreateNats(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware)
 	simple.StartServerWithSerializer(serverTransport, false, serializer, serverMiddleware...)
 	time.Sleep(200 * time.Millisecond)
 
-	clientTransport, err := tnats.NewNatsTransporter("nats://demo.nats.io:4222", 10000*time.Second)
+	clientTransport, err := tnats.NewNatsTransporter("nats://localhost:4222", 10000*time.Second)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	client = yarf.NewClient(clientTransport)
+	client.WithSerializer(serializer)
 
-	return client, func() {}
+	return client, func() { serverTransport.Close() }
 }

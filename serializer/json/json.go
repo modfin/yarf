@@ -8,6 +8,7 @@ import (
 //Serializer is for encoding and decoding to json
 func Serializer() yarf.Serializer {
 	return yarf.Serializer{
+		ContentType: "application/json",
 		Marshal: func(v interface{}) ([]byte, error) {
 			return j.Marshal(v)
 		},

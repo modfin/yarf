@@ -70,7 +70,7 @@ func (h *HTTPTransporter) Call(ctx context.Context, function string, requestData
 
 	req, err := http.NewRequest("POST", url+"/"+function, r)
 	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("WithContent-Type", "application/octet-stream")
 
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(req)
@@ -99,9 +99,9 @@ func (h *HTTPTransporter) Start() error {
 	return h.server.ListenAndServe()
 }
 
-// Stop halts the http server to receive requests
-func (h *HTTPTransporter) Stop(ctx context.Context) error {
-	return h.server.Shutdown(ctx)
+// Close halts the http server to receive requests
+func (h *HTTPTransporter) Close() error {
+	return h.server.Shutdown(context.Background())
 }
 
 // Listen defines the function that will handle yarf requests
