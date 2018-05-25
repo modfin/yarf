@@ -58,6 +58,16 @@ import (
     "bitbucket.org/modfin/yarf/transport/thttp"
     "log"
 )
+
+
+func SHA256(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+    hash := hashing.Sum256(req.Content)
+    resp.SetParam("hash",
+        base64.StdEncoding.EncodeToString(hash[:]))
+    return
+}
+
 func main(){
 
 	transport, err := thttp.NewHttpTransporter(thttp.Options{})
@@ -65,12 +75,14 @@ func main(){
         log.Fatal(err)
     }
     server := yarf.NewServer(transport, "a", "namespace")
-    
+
+    server.HandleFunc(SHA256)
     server.Handle("add", func(req *yarf.Msg, resp *yarf.Msg) (err error){
     
         resp.SetParam("res", req.Param("val1").IntOr(0)+req.Param("val2").IntOr(0))
         return nil
     })
+
     
     log.Fatal(transport.Start())
 }
@@ -93,7 +105,7 @@ func main(){
     }
     client := yarf.NewClient(transport)
     
-    res, err := client.Request("a.namespace.add").
+    msg, err := client.Request("a.namespace.add").
         SetParam("val1", 5).
         SetParam("val2", 7).
         Get()
@@ -103,6 +115,19 @@ func main(){
     }
     
     fmt.Println(" Result of 5 + 7 =", res.Param("res").IntOr(-1))
+
+
+
+    msg, err = client.Request("a.namespace.SHA256").
+        WithBinaryContent([]byte("Hello Yarf")).
+        Get()
+
+    if err != nil {
+        return "", err
+    }
+
+    hash, ok := msg.Param("hash").String()
+
 }
 
 ```
