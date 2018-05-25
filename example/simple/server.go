@@ -3,8 +3,8 @@ package simple
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
-	"bitbucket.org/modfin/yarf/serializer/msgpack"
+	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
+	"bitbucket.org/modfin/yarf/serializers/msgpack"
 	"context"
 	hashing "crypto/sha256"
 	"encoding/base64"
@@ -241,7 +241,7 @@ func sha256(req *yarf.Msg, resp *yarf.Msg) (err error) {
 func swapWithSerializer(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 	t := Tuple{}
-	err = req.BindContentUsing(&t, jsoniterator.Serializer())
+	err = req.BindContent(&t)
 
 	tmp := t.Val1
 	t.Val1 = t.Val2

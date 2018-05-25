@@ -3,6 +3,7 @@ package yarf
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 // StatusOk rpc status ok
@@ -32,53 +33,49 @@ const HeaderUUID = "status"
 // HeaderFunction is the function name header param name
 const HeaderFunction = "function"
 
+// HeaderContentType is the function name header param name
+const HeaderContentType = "content-type"
+
 // Msg represents a message that is being passed between client and server
 type Msg struct {
 	ctx        context.Context
 	serializer Serializer
 
+	builderError error
+
 	Headers map[string]interface{}
-	Binary  bool
 	Content []byte
 }
 
 func (m *Msg) doMarshal() (data []byte, err error) {
-
-	defer func() {
-		if err != nil {
-			fmt.Println("ERROR yarf.Msg Marshal", err)
-		}
-	}()
-
 	data, err = m.serializer.Marshal(m)
 	return
 
 }
 
 func (m *Msg) doUnmarshal(data []byte) (err error) {
-	defer func() {
-		if err != nil {
-			fmt.Println("ERROR yarf.Msg Unmarshal", err)
-		}
-	}()
 	err = m.serializer.Unmarshal(data, m)
 	return
 }
 
 // BindContent is used to unmarshal/bind content data to input interface
 func (m *Msg) BindContent(content interface{}) (err error) {
-	return m.BindContentUsing(content, m.serializer)
-}
 
-// BindContentUsing is used to unmarshal/bind content data to input interface
-func (m *Msg) BindContentUsing(content interface{}, serializer Serializer) (err error) {
+	contentType, ok := m.ContentType()
 
-	err = serializer.Unmarshal(m.Content, content)
-	if err != nil {
-		return err
+	if !ok {
+		return errors.New("could not find a content type to use for deserialization")
 	}
 
-	return nil
+	ser, ok := serializer(contentType)
+
+	if !ok {
+		return errors.New("could not find a serializer matching content type")
+	}
+
+	err = ser.Unmarshal(m.Content, content)
+
+	return
 }
 
 // Status returns the status header of the request, if one exist
@@ -93,6 +90,18 @@ func (m *Msg) Status() (status int, ok bool) {
 // SetStatus sets the statues header of the message
 func (m *Msg) SetStatus(code int) *Msg {
 	m.SetHeader(HeaderStatus, code)
+	return m
+}
+
+// ContentType returns the ContentType header of the request, if one exist
+func (m *Msg) ContentType() (contentType string, ok bool) {
+	contentType, ok = (m.Headers[HeaderContentType]).(string)
+	return
+}
+
+// SetContentType sets the statues header of the message
+func (m *Msg) SetContentType(contentType string) *Msg {
+	m.SetHeader(HeaderContentType, contentType)
 	return m
 }
 
@@ -131,7 +140,6 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 // SetContent sets the input interface as the content of the message
 func (m *Msg) SetContent(content interface{}) *Msg {
 	m.SetContentUsing(content, m.serializer)
-	m.Binary = false
 	return m
 }
 
@@ -139,12 +147,13 @@ func (m *Msg) SetContent(content interface{}) *Msg {
 func (m *Msg) SetContentUsing(content interface{}, serializer Serializer) *Msg {
 	var err error
 
-	m.SetHeader("content-type", serializer.ContentType)
+	m.SetContentType(serializer.ContentType)
 	m.Content, err = serializer.Marshal(content)
-	m.Binary = true
 
 	if err != nil {
-		fmt.Println("Could not set WithContent", err)
+		m.builderError = err
+		// TODO should panic? set an internal error?
+		fmt.Println("Could not set SetContentUsing", err)
 	}
 	return m
 }
@@ -152,7 +161,7 @@ func (m *Msg) SetContentUsing(content interface{}, serializer Serializer) *Msg {
 // SetBinaryContent sets the input data as content of the message
 func (m *Msg) SetBinaryContent(content []byte) *Msg {
 	m.Content = content
-	m.Binary = true
+	m.SetContentType("binary")
 	return m
 }
 

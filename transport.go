@@ -1,7 +1,9 @@
 package yarf
 
-import "context"
-import pack "github.com/vmihailenco/msgpack"
+import (
+	"context"
+	"github.com/vmihailenco/msgpack"
+)
 
 // Transporter is the interface that must be fulfilled for a transporter.
 type Transporter interface {
@@ -27,10 +29,29 @@ type Serializer struct {
 	Unmarshal   func(data []byte, v interface{}) error
 }
 
+var serializers map[string]Serializer
+
+func init() {
+	serializers = make(map[string]Serializer)
+}
+
+// RegisterSerializer lets a user register a serializer for a specific content type
+// this allow yarf to bind message content to that specific serial format.
+// Yard standard serializers can be registered by importing with side effect
+// e.g. import _ ".../yarf/serializers"
+func RegisterSerializer(serializer Serializer) {
+	serializers[serializer.ContentType] = serializer
+}
+
+func serializer(contentType string) (serializer Serializer, ok bool) {
+	serializer, ok = serializers[contentType]
+	return
+}
+
 func defaultSerializer() Serializer {
 	return Serializer{
 		ContentType: "application/msgpack",
-		Marshal:     func(v interface{}) ([]byte, error) { return pack.Marshal(v) },
-		Unmarshal:   func(data []byte, v interface{}) error { return pack.Unmarshal(data, v) },
+		Marshal:     func(v interface{}) ([]byte, error) { return msgpack.Marshal(v) },
+		Unmarshal:   func(data []byte, v interface{}) error { return msgpack.Unmarshal(data, v) },
 	}
 }

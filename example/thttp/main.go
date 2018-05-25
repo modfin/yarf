@@ -3,7 +3,7 @@ package main
 import (
 	"bitbucket.org/modfin/yarf/example/simple"
 	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializer/msgpack"
+	"bitbucket.org/modfin/yarf/serializers/msgpack"
 	"bitbucket.org/modfin/yarf/transport/thttp"
 	"fmt"
 	"github.com/opentracing/basictracer-go/examples/dapperish"

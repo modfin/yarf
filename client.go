@@ -11,6 +11,7 @@ const (
 	transitState
 	requestState
 	responseState
+	finishedState
 )
 
 // NewClient create a new yarf client using a specific transporter
@@ -72,8 +73,9 @@ type RPC struct {
 	function string
 	ctx      context.Context
 
-	mutex sync.Mutex
-	state int
+	mutex      sync.Mutex
+	state      int
+	stateMutex sync.Mutex
 
 	middleware []Middleware
 
@@ -82,16 +84,15 @@ type RPC struct {
 	responseMsgContent           interface{}
 	responseMsgContentSerializer Serializer
 
-	callback      func(*Msg)
+	msgCallback   func(*Msg)
 	errorCallback func(error)
 
 	msgChannel   chan *Msg
 	errorChannel chan error
 
-	err       error
-	done      chan bool
-	isDone    bool
-	doneMutex sync.Mutex
+	err    error
+	done   chan bool
+	isDone bool
 }
 
 // WithContent sets requests content, it does nothing if called after exec()
@@ -152,20 +153,14 @@ func (r *RPC) WithMiddleware(middleware ...Middleware) *RPC {
 	return r
 }
 
-// BindResponseContent will unmarshal response into interface passed into method, it does nothing if called after exec()
+// BindResponseContent will unmarshal response into interface passed into method
 func (r *RPC) BindResponseContent(content interface{}) *RPC {
-	return r.BindResponseContentUsing(content, r.client.serializer)
-}
-
-// BindResponseContentUsing will unmarshal response into interface passed into method using a specific serializer, it does nothing if called after exec()
-func (r *RPC) BindResponseContentUsing(content interface{}, serializer Serializer) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {
 		return r
 	}
 	r.responseMsgContent = content
-	r.responseMsgContentSerializer = serializer
 	return r
 }
 
@@ -194,16 +189,28 @@ func (r *RPC) SetParams(params ...Param) *RPC {
 	return r
 }
 
+func (r *RPC) setState(state int) {
+	r.stateMutex.Lock()
+	r.state = state
+	r.stateMutex.Unlock()
+}
+
+func (r *RPC) stateEq(state int) bool {
+	r.stateMutex.Lock()
+	defer r.stateMutex.Unlock()
+	return r.state == state
+}
+
 // exec perform rpc request and return a RPC transit struct. Done(), Get() and Channels() will call exec() if it has not been called "manually".
 func (r *RPC) exec() *RPCTransit {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 
-	if r.state != builderState {
+	if !r.stateEq(builderState) {
 		return &RPCTransit{r}
 	}
+	r.setState(transitState)
 
-	r.state = transitState
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	if r.ctx == nil {
 		r.ctx = context.Background()
@@ -237,16 +244,15 @@ func (r *RPC) exec() *RPCTransit {
 			cancel()
 			r.done <- true
 			close(r.done)
-			if r.errorChannel != nil {
-				close(r.errorChannel)
-			}
+
+			r.setState(finishedState)
 		}()
 
-		r.state = requestState
+		r.setState(requestState)
 
 		r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
 
-		r.state = responseState
+		r.setState(responseState)
 
 		if r.err != nil {
 			return
@@ -254,11 +260,10 @@ func (r *RPC) exec() *RPCTransit {
 
 		if r.msgChannel != nil {
 			r.msgChannel <- r.responseMsg
-			close(r.msgChannel)
 		}
 
-		if r.callback != nil {
-			r.callback(r.responseMsg)
+		if r.msgCallback != nil {
+			r.msgCallback(r.responseMsg)
 		}
 
 	}()
@@ -295,7 +300,7 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 		}
 
 		if r.responseMsgContent != nil {
-			err = response.BindContentUsing(r.responseMsgContent, r.responseMsgContentSerializer)
+			err = response.BindContent(r.responseMsgContent)
 			return err
 		}
 
@@ -308,15 +313,14 @@ func (r *RPC) Async() *RPCTransit {
 	return r.exec()
 }
 
-// Get wait for request to be done before returning with the resulting message. If exec() has not been called, Get() will
-// call it.
+// Get wait for request to be done before returning with the resulting message and error.
 func (r *RPC) Get() (*Msg, error) {
 	r.Done()
 	return r.responseMsg, r.err
 }
 
-// Get wait for request to be done before returning with the resulting message. If exec() has not been called, Get() will
-// call it.
+// Get wait for request to be done before returning with the resulting message and error. It the response already is
+// resolved it will return the resulting message or error without waiting for anything
 func (r *RPCTransit) Get() (*Msg, error) {
 	return r.rpc.Get()
 }
@@ -325,20 +329,34 @@ func (r *RPCTransit) Get() (*Msg, error) {
 // Channels() will call UseChannel() and then exec() if exec() has not been called.
 func (r *RPC) Channels() (<-chan *Msg, <-chan error) {
 
-	r.mutex.Lock()
+	r.stateMutex.Lock()
 
-	if r.state != builderState {
-		r.mutex.Unlock()
+	if r.state < responseState {
+		r.msgChannel = make(chan *Msg, 1)
+		r.errorChannel = make(chan error, 1)
+
+		if r.state == builderState {
+			r.stateMutex.Unlock()
+			r.exec()
+			return r.msgChannel, r.errorChannel
+		}
+		r.stateMutex.Unlock()
 		return r.msgChannel, r.errorChannel
 	}
 
-	r.msgChannel = make(chan *Msg)
-	r.errorChannel = make(chan error)
+	r.stateMutex.Unlock()
 
-	r.mutex.Unlock()
-	r.exec()
+	msgChannel := make(chan *Msg, 1)
+	errorChannel := make(chan error, 1)
 
-	return r.msgChannel, r.errorChannel
+	if r.err != nil {
+		errorChannel <- r.err
+	} else {
+		msgChannel <- r.responseMsg
+	}
+
+	return msgChannel, errorChannel
+
 }
 
 // Channels returns msgChannel associated with the request, these are created if UseChannels() is called before exec().
@@ -347,47 +365,68 @@ func (r *RPCTransit) Channels() (<-chan *Msg, <-chan error) {
 	return r.rpc.Channels()
 }
 
-// Callbacks sets a callback function that will be called on success or failure, it does nothing if called after exec()
-func (r *RPC) Callbacks(callback func(*Msg), errorCallback func(error)) *RPCTransit {
-	r.mutex.Lock()
-	if r.state != builderState {
-		r.mutex.Unlock()
-		return &RPCTransit{r}
+// Callbacks sets a msgCallback function that will be called on success or failure, it does nothing if called after exec()
+func (r *RPC) Callbacks(msgCallback func(*Msg), errorCallback func(error)) *RPCTransit {
+
+	transit := &RPCTransit{r}
+	r.stateMutex.Lock()
+
+	if r.state < responseState {
+		r.msgCallback = msgCallback
+		r.errorCallback = errorCallback
+
+		if r.state == builderState {
+			r.stateMutex.Unlock()
+			r.exec()
+			return transit
+		}
+		r.stateMutex.Unlock()
+		return transit
 	}
 
-	r.callback = callback
-	r.errorCallback = errorCallback
+	r.stateMutex.Unlock()
 
-	r.mutex.Unlock()
-	return r.exec()
+	if r.err != nil {
+		go errorCallback(r.err)
+	} else {
+		go msgCallback(r.responseMsg)
+	}
+
+	return transit
 }
 
-// Done waits until the rpc request is done and has returned a result. Done will call exec(), which performs the request,
-// if exec() has not been called prior to Done being called
+// Callbacks sets a msgCallback function that will be called on success or failure, it does nothing if called after exec()
+func (r *RPCTransit) Callbacks(callback func(*Msg), errorCallback func(error)) *RPCTransit {
+	return r.rpc.Callbacks(callback, errorCallback)
+}
+
+// Done waits until the rpc request is done and has returned a result. If the result is already resolved, the error will
+// be returned directly
 func (r *RPC) Done() error {
 	r.exec()
 
-	r.doneMutex.Lock()
-	if !r.isDone {
-		r.isDone = <-r.done
+	done := <-r.done
+	if done {
+		r.isDone = true
 	}
-	r.doneMutex.Unlock()
 
 	return r.err
 }
 
-// Done waits until the rpc request is done and has returned a result. Done will call exec(), which performs the request,
-// if exec() has not been called prior to Done being called
+// Done waits until the rpc request is done and has returned a result. If the result is already resolved, the error will
+// be returned directly
 func (r *RPCTransit) Done() error {
 	return r.rpc.Done()
 }
 
-// Error return the error of the request, if any at the point of calling it.
+// Error return the error of the request, if any at the point of calling it. Meaning that it might return nil and later
+// return a none nil value
 func (r *RPC) Error() error {
 	return r.err
 }
 
-// Error return the error of the request, if any at the point of calling it.
+// Error return the error of the request, if any at the point of calling it. Meaning that it might return nil and later
+// return a none nil value.
 func (r *RPCTransit) Error() error {
 	return r.rpc.Error()
 }

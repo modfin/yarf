@@ -3,7 +3,7 @@ package simple
 import (
 	"bitbucket.org/modfin/yarf"
 	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializer/jsoniterator"
+	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
@@ -120,6 +120,29 @@ func CatChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
 }
 
+// CatLateChannelRequest concatenates an array of strings in a string by using channels after the request has been resolved
+func CatLateChannelRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
+	transit := client.Request("a.integration.cat").
+		SetParam("arr", arr).
+		Async()
+
+	transit.Done()
+
+	msgChan, errChan := transit.Channels()
+
+	var err error
+	var msg *yarf.Msg
+	select {
+	case msg = <-msgChan:
+	case err = <-errChan:
+	}
+
+	//fmt.Println("LATE CHANNEL", msg, err, msgChan, errChan )
+
+	return msg, err
+
+}
+
 // CatCallbackRequest concatenates an array of strings in a string by using callbacks
 func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 
@@ -136,6 +159,37 @@ func CatCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
 	client.Request("a.integration.cat").
 		SetParam("arr", arr).
 		Callbacks(msgFunc, errFunc)
+
+	var err error
+	var msg *yarf.Msg
+	select {
+	case msg = <-msgChan:
+	case err = <-errChan:
+	}
+
+	return msg, err
+}
+
+// CatLateCallbackRequest concatenates an array of strings in a string by using callbacks after request is resolved
+func CatLateCallbackRequest(client yarf.Client, arr ...string) (*yarf.Msg, error) {
+
+	msgChan := make(chan *yarf.Msg)
+	errChan := make(chan error)
+
+	msgFunc := func(msg *yarf.Msg) {
+		msgChan <- msg
+	}
+	errFunc := func(e error) {
+		errChan <- e
+	}
+
+	transit := client.Request("a.integration.cat").
+		SetParam("arr", arr).
+		Async()
+
+	transit.Done()
+
+	transit.Callbacks(msgFunc, errFunc)
 
 	var err error
 	var msg *yarf.Msg
@@ -263,7 +317,7 @@ func SwapAndMultiplyRequest(client yarf.Client, tuple Tuple, multiplier int) (re
 func SwapWithSerializer(client yarf.Client, tuple Tuple) (res Tuple, err error) {
 	return res, client.Request("a.integration.swapWithSerializer").
 		WithContentUsing(tuple, jsoniterator.Serializer()).
-		BindResponseContentUsing(&res, jsoniterator.Serializer()).
+		BindResponseContent(&res).
 		Done()
 }
 
