@@ -268,7 +268,7 @@ type Msg struct {
 * More Examples
 * Add support for reader and writers, for streaming requests/responses
 * Http Transport
-  * Improving service discover on HTTP transport
+    * Improving service discover on HTTP transport
         * Consul
         * etcd
         * DNS
