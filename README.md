@@ -206,8 +206,8 @@ e.g. a simple server side caching
 	}
 ```
 
-On a client, middleware can be set on per request bases (local) or for all request going through
-the client (global) and are run as follows
+On a client, middleware can be set on per request bases (`local`) or for all request going through
+the client (`global`) and are run as follows
 
 ```
 Client
@@ -223,8 +223,8 @@ Client
 
 ```
 
-On the server, middleware can be set on per handler bases(local) or for all reguest going through
-the server (global) and are run as follow
+On the server, middleware can be set on per handler bases (`local`) or for all reguest going through
+the server (`global`) and are run as follow
 
 ```
 Incomming from transport layer
