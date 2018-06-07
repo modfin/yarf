@@ -226,6 +226,7 @@ Client
 On the server, middleware can be set on per handler bases(local) or for all reguest going through
 the server (global) and are run as follow
 
+```
 Incomming from transport layer
    |
    V
@@ -236,7 +237,7 @@ Incomming from transport layer
    |
    V
 Outgoing to transport layer
-
+```
 
 
 ## Protocol
