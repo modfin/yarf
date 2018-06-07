@@ -269,14 +269,14 @@ type Msg struct {
 * Add support for reader and writers, for streaming requests/responses
 * Http Transport
   * Improving service discover on HTTP transport
-    * Consul
-    * etcd
-    * DNS
-  * Improving loadbalancing on HTTP transport
-  * Support for http2 and tls transport
+        * Consul
+        * etcd
+        * DNS
+    * Improving loadbalancing on HTTP transport
+    * Support for http2 and tls transport
 * Middlewares
-  * Proper Logging
-  * Statistics and latency collection
-  * Circuit breakers
-  * Caching
-  * Authentictaion, JWT
+    * Proper Logging
+    * Statistics and latency collection
+    * Circuit breakers
+    * Caching
+    * Authentictaion, JWT
