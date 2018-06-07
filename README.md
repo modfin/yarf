@@ -213,16 +213,12 @@ the client (global) and are run as follows
 Client
    |
    V
-   Global0 --> Global1 --> Local0 --> Local1
-                                        |
-                                        V
-                                        Call to transport layer
-                                        Response from transport layer
-                                        |
-                                        V
-    Global0 <-- Global1 <-- Local0 <-- Local1
-    |
-    V
+   Global0 --> Global1 --> Local0 --> Local1 --> Call to transport layer
+                                                        |
+                                                        V
+   Global0 <-- Global1 <-- Local0 <-- Local1 <-- Response from transport layer
+   |
+   V
 Client
 
 ```
@@ -233,15 +229,12 @@ the server (global) and are run as follow
 Incomming from transport layer
    |
    V
-   Global0 --> Global1 --> Local0 --> Local1
-                                        |
-                                        V
-                                        Running handler function
-                                        |
-                                        V
-    Global0 <-- Global1 <-- Local0 <-- Local1
-    |
-    V
+   Global0 --> Global1 --> Local0 --> Local1 --> Running handler function
+                                                      |
+                                                      V
+   Global0 <-- Global1 <-- Local0 <-- Local1 <-- Response from handler function
+   |
+   V
 Outgoing to transport layer
 
 
