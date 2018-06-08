@@ -148,12 +148,19 @@ func main(){
     hash, ok := msg.Param("hash").String()
     fmt.Println("ok", ok, "hash", hash)
 
-    // Binding response content to string (works with structs, slices and so on)
+
     var joined string
+
+    // Binding response content to string (works with structs, slices and so on)
     err = client.Request("a.namespace.join").
-        SetParam("slice", []string{"j", "o", "i", "n", "e", "d"}).
+        SetParam("slice", []string{"jo", "in", "ed"}).
         BindResponseContent(&s).
         Done()
+
+    fmt.Println("joined", joined, "err", err)
+
+    // or
+    err = client.Call("a.namespace.join", nil, &joined, yarf.NewParam("slice", []string{"joi", "ned"}))
 
     fmt.Println("joined", joined, "err", err)
 }
