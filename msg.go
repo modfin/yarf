@@ -87,7 +87,8 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 	return
 }
 
-// BindContent is used to unmarshal/bind content data to input interface
+// BindContent is used to unmarshal/bind content data to input interface. It will look for a proper deserializer matching
+// header content-type. Serializer can be registered by yarf.RegisterSerializer()
 func (m *Msg) BindContent(content interface{}) (err error) {
 
 	contentType, ok := m.ContentType()

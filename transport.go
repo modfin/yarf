@@ -37,8 +37,8 @@ func init() {
 
 // RegisterSerializer lets a user register a protocolSerializer for a specific content type
 // this allow yarf to bind message content to that specific serial format.
-// Yard standard serializers can be registered by importing with side effect
-// e.g. import _ ".../yarf/serializers"
+// Yarf standard serializers can be registered by importing with side effect
+// e.g. import _ "bitbucket.org/modfin/yarf/serializers"
 func RegisterSerializer(serializer Serializer) {
 	serializers[serializer.ContentType] = serializer
 }
