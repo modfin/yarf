@@ -18,15 +18,17 @@ const (
 func NewClient(t CallTransporter) Client {
 	s := Client{}
 	s.transporter = t
+	s.protocolSerializer = defaultSerializer()
 	s.serializer = defaultSerializer()
 	return s
 }
 
 // Client is a struct wrapping a transporting layer and methods for using yarf
 type Client struct {
-	transporter CallTransporter
-	middleware  []Middleware
-	serializer  Serializer
+	transporter        CallTransporter
+	middleware         []Middleware
+	protocolSerializer Serializer
+	serializer         Serializer
 }
 
 // WithMiddleware adds middleware to client request for pre and post processing
@@ -34,7 +36,12 @@ func (c *Client) WithMiddleware(middleware ...Middleware) {
 	c.middleware = append(c.middleware, middleware...)
 }
 
-// WithSerializer setts the serializer used for transport.
+// WithProtocolSerializer sets the protocolSerializer used for transport.
+func (c *Client) WithProtocolSerializer(serializer Serializer) {
+	c.protocolSerializer = serializer
+}
+
+// WithSerializer sets the serializer used for content if not binary
 func (c *Client) WithSerializer(serializer Serializer) {
 	c.serializer = serializer
 }
@@ -51,13 +58,12 @@ func (c *Client) Call(function string, requestData interface{}, responseData int
 // Request creates a request builder in yarf
 func (c *Client) Request(function string) *RPC {
 	return &RPC{
-		client:                       c,
-		function:                     function,
-		requestMsg:                   &Msg{serializer: c.serializer},
-		responseMsg:                  &Msg{serializer: c.serializer},
-		responseMsgContentSerializer: c.serializer,
-		state: builderState,
-		done:  make(chan bool),
+		client:      c,
+		function:    function,
+		requestMsg:  &Msg{protocolSerializer: c.protocolSerializer, serializer: c.serializer},
+		responseMsg: &Msg{},
+		state:       builderState,
+		done:        make(chan bool),
 	}
 }
 
@@ -79,10 +85,9 @@ type RPC struct {
 
 	middleware []Middleware
 
-	requestMsg                   *Msg
-	responseMsg                  *Msg
-	responseMsgContent           interface{}
-	responseMsgContentSerializer Serializer
+	requestMsg         *Msg
+	responseMsg        *Msg
+	responseMsgContent interface{}
 
 	msgCallback   func(*Msg)
 	errorCallback func(error)
@@ -97,10 +102,10 @@ type RPC struct {
 
 // WithContent sets requests content, it does nothing if called after exec()
 func (r *RPC) WithContent(requestData interface{}) *RPC {
-	return r.WithContentUsing(requestData, r.client.serializer)
+	return r.WithContentUsing(requestData, r.client.protocolSerializer)
 }
 
-// WithContentUsing sets requests content with a specific serializer, it does nothing if called after exec()
+// WithContentUsing sets requests content with a specific protocolSerializer, it does nothing if called after exec()
 func (r *RPC) WithContentUsing(requestData interface{}, serializer Serializer) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

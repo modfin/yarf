@@ -31,6 +31,7 @@ func CreateHTTP(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware)
 	}
 
 	client = yarf.NewClient(clientTransport)
+	client.WithProtocolSerializer(serializer)
 	client.WithSerializer(serializer)
 
 	return client, func() { serverTransport.Close() }
@@ -57,6 +58,7 @@ func CreateNats(serializer yarf.Serializer, serverMiddleware ...yarf.Middleware)
 	}
 
 	client = yarf.NewClient(clientTransport)
+	client.WithProtocolSerializer(serializer)
 	client.WithSerializer(serializer)
 
 	return client, func() { serverTransport.Close() }

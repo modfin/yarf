@@ -278,6 +278,7 @@ func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, s
 
 	print("Creating server")
 	server := yarf.NewServer(serverTransport, "a", "integration")
+	server.WithProtocolSerializer(serializer)
 	server.WithSerializer(serializer)
 	server.WithMiddleware(midware...)
 

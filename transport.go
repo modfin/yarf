@@ -22,7 +22,7 @@ type ListenTransporter interface {
 	Close() error
 }
 
-// Serializer is the interface that must be fulfilled for serializer of data before transport.
+// Serializer is the interface that must be fulfilled for protocolSerializer of data before transport.
 type Serializer struct {
 	ContentType string
 	Marshal     func(v interface{}) ([]byte, error)
@@ -35,7 +35,7 @@ func init() {
 	serializers = make(map[string]Serializer)
 }
 
-// RegisterSerializer lets a user register a serializer for a specific content type
+// RegisterSerializer lets a user register a protocolSerializer for a specific content type
 // this allow yarf to bind message content to that specific serial format.
 // Yard standard serializers can be registered by importing with side effect
 // e.g. import _ ".../yarf/serializers"

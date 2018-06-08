@@ -6,7 +6,6 @@ import (
 	"bitbucket.org/modfin/yarf/serializers/msgpack"
 	"testing"
 
-	"bitbucket.org/modfin/yarf/serializers/json"
 	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
 )
 
@@ -24,7 +23,7 @@ var serializerTable = []struct {
 	serializer yarf.Serializer
 }{
 	{"MSG_PACK", msgpack.Serializer()},
-	{"JSON", json.Serializer()},
+	//{"JSON", json.Serializer()},
 	{"JSON_ITERATOR", jsoniterator.Serializer()},
 }
 

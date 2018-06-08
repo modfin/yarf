@@ -260,12 +260,33 @@ type Msg struct {
 }
 ```
 
+The message struct header field contain mutiple keys that is usefull for the
+yarf, but can also be used to pass paremeters. I shall howerver always contain
+a content-type which helps yarf in dezerlization of Content, if needed.
+
+
+
+## Serialization
+
+This might be a some what confusing topic since there is a few layers to it.
+But in general there are only two that has to be considerd. The serialization
+of the protocol and the serialization of the content.
+
+For both the the protocol and the content a content type shall aways be provided.
+This helps the reciver of the message to deserialize the message and the content.
+
+Serlizations can be done in different combinations and independet of each other.
+The default is **msgpack** for both but can be changed per client, server or message basis.
+Since it is might be hard to track what server has what and so on, serializers can
+be regiserd in yarf by `yarf.RegisterSerializer(serializer)`. Yarf also provde some extras ones, msgpack and json,
+which can be regiserd by `import _ bitbucket.org/modfin/yarf/serializers` and we think this should cover most needs.
+
 
 
 
 ## TODO
 * Unit testing
-* More Examples
+* More documentation
 * Add support for reader and writers, for streaming requests/responses
 * Http Transport
     * Improving service discover on HTTP transport

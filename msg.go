@@ -38,8 +38,9 @@ const HeaderContentType = "content-type"
 
 // Msg represents a message that is being passed between client and server
 type Msg struct {
-	ctx        context.Context
-	serializer Serializer
+	ctx                context.Context
+	protocolSerializer Serializer
+	serializer         Serializer
 
 	builderError error
 
@@ -48,8 +49,8 @@ type Msg struct {
 }
 
 func (m *Msg) doMarshal() (data []byte, err error) {
-	contentType := []byte(m.serializer.ContentType + "\n")
-	content, err := m.serializer.Marshal(m)
+	contentType := []byte(m.protocolSerializer.ContentType + "\n")
+	content, err := m.protocolSerializer.Marshal(m)
 
 	data = make([]byte, 0, len(contentType)+len(content))
 	data = append(data, contentType...)
@@ -79,7 +80,7 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 	ser, ok := serializer(contentType)
 
 	if !ok {
-		return errors.New("could not find a suitable serializer")
+		return errors.New("could not find a suitable protocolSerializer")
 	}
 
 	err = ser.Unmarshal(data[contentlen+1:], m)
@@ -98,7 +99,7 @@ func (m *Msg) BindContent(content interface{}) (err error) {
 	ser, ok := serializer(contentType)
 
 	if !ok {
-		return errors.New("could not find a serializer matching content type")
+		return errors.New("could not find a protocolSerializer matching content type")
 	}
 
 	err = ser.Unmarshal(m.Content, content)
