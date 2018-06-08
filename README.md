@@ -69,6 +69,20 @@ func SHA256(req *yarf.Msg, resp *yarf.Msg) (err error) {
     return
 }
 
+func join(req *yarf.Msg, resp *yarf.Msg) (err error) {
+
+    slice, ok := req.Param("slice").StringSlice()
+    if !ok{
+        return errors.New("param arr was not a string slice")
+    }
+
+    joined := strings.Join(slice, "")
+
+    resp.SetContent(joined)
+
+    return nil
+}
+
 func main(){
 
 	transport, err := thttp.NewHttpTransporter(thttp.Options{})
@@ -78,11 +92,14 @@ func main(){
     server := yarf.NewServer(transport, "a", "namespace")
 
     server.HandleFunc(SHA256)
+    server.HandleFunc(join)
     server.Handle("add", func(req *yarf.Msg, resp *yarf.Msg) (err error){
         res := req.Param("val1").IntOr(0)+req.Param("val2").IntOr(0)
         resp.SetParam("res", res)
         return nil
     })
+
+
 
     
     log.Fatal(transport.Start())
@@ -105,7 +122,9 @@ func main(){
         log.Fatal(err)
     }
     client := yarf.NewClient(transport)
-    
+
+
+    // Sending and reciving params
     msg, err := client.Request("a.namespace.add").
         SetParam("val1", 5).
         SetParam("val2", 7).
@@ -117,6 +136,7 @@ func main(){
     fmt.Println(" Result of 5 + 7 =", res.Param("res").IntOr(-1))
 
 
+    //Sending binary content
     msg, err = client.Request("a.namespace.SHA256").
         WithBinaryContent([]byte("Hello Yarf")).
         Get()
@@ -126,6 +146,16 @@ func main(){
     }
 
     hash, ok := msg.Param("hash").String()
+    fmt.Println("ok", ok, "hash", hash)
+
+    // Binding response content to string (works with structs, slices and so on)
+    var joined string
+    err = client.Request("a.namespace.join").
+        SetParam("slice", []string{"j", "o", "i", "n", "e", "d"}).
+        BindResponseContent(&s).
+        Done()
+
+    fmt.Println("joined", joined, "err", err)
 }
 
 ```
