@@ -126,8 +126,8 @@ func main(){
 
     // Sending and reciving params
     msg, err := client.Request("a.namespace.add").
-        SetParam("val1", 5).
-        SetParam("val2", 7).
+        WithParam("val1", 5).
+        WithParam("val2", 7).
         Get()
     
     if err != nil{
@@ -153,7 +153,7 @@ func main(){
 
     // Binding response content to string (works with structs, slices and so on)
     err = client.Request("a.namespace.join").
-        SetParam("slice", []string{"jo", "in", "ed"}).
+        WithParam("slice", []string{"jo", "in", "ed"}).
         BindResponseContent(&s).
         Done()
 
@@ -322,6 +322,19 @@ extras ones, msgpack and json, which can be regiserd by
 `import _ bitbucket.org/modfin/yarf/serializers` and we think this should
 cover most needs.
 
+
+
+## Transport
+The transport layer works independetly of everything else and is responsibel
+for service discovery, transport of data and provide to a context that can be
+canceld from the client to the server.
+
+A implmentation using Nats and one using HTTP is provided with yarf.
+
+A transporter shall implment a rather simple api in order to work with yarf.
+But since different transporters have different properties, some thinsgs may
+vary. e.g. the function namespacing using Nats is a global and has no real need
+for service discover, while HTTP has local namespace for each specific serivece.
 
 
 

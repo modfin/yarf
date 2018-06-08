@@ -19,7 +19,7 @@ func NewClient(t CallTransporter) Client {
 	s := Client{}
 	s.transporter = t
 	s.protocolSerializer = defaultSerializer()
-	s.serializer = defaultSerializer()
+	s.contentSerializer = defaultSerializer()
 	return s
 }
 
@@ -28,7 +28,7 @@ type Client struct {
 	transporter        CallTransporter
 	middleware         []Middleware
 	protocolSerializer Serializer
-	serializer         Serializer
+	contentSerializer  Serializer
 }
 
 // WithMiddleware adds middleware to client request for pre and post processing
@@ -41,15 +41,15 @@ func (c *Client) WithProtocolSerializer(serializer Serializer) {
 	c.protocolSerializer = serializer
 }
 
-// WithSerializer sets the serializer used for content if not binary
+// WithSerializer sets the contentSerializer used for content if not binary
 func (c *Client) WithSerializer(serializer Serializer) {
-	c.serializer = serializer
+	c.contentSerializer = serializer
 }
 
 // Call is a short hand performs a request from function name, and req param. The response is unmarshaled into resp
 func (c *Client) Call(function string, requestData interface{}, responseData interface{}, requestParams ...Param) error {
 	return c.Request(function).
-		SetParams(requestParams...).
+		WithParams(requestParams...).
 		WithContent(requestData).
 		BindResponseContent(responseData).
 		Done()
@@ -60,7 +60,7 @@ func (c *Client) Request(function string) *RPC {
 	return &RPC{
 		client:      c,
 		function:    function,
-		requestMsg:  &Msg{protocolSerializer: c.protocolSerializer, serializer: c.serializer},
+		requestMsg:  &Msg{protocolSerializer: c.protocolSerializer, contentSerializer: c.contentSerializer},
 		responseMsg: &Msg{}, // Automatically find deserializer
 		state:       builderState,
 		done:        make(chan bool),
@@ -102,7 +102,7 @@ type RPC struct {
 
 // WithContent sets requests content, it does nothing if called after exec()
 func (r *RPC) WithContent(requestData interface{}) *RPC {
-	return r.WithContentUsing(requestData, r.client.protocolSerializer)
+	return r.WithContentUsing(requestData, r.client.contentSerializer)
 }
 
 // WithContentUsing sets requests content with a specific protocolSerializer, it does nothing if called after exec()
@@ -169,8 +169,8 @@ func (r *RPC) BindResponseContent(content interface{}) *RPC {
 	return r
 }
 
-// SetParam set a param that can be read by server side, like a query param in http requests, it does nothing if called after exec()
-func (r *RPC) SetParam(key string, value interface{}) *RPC {
+// WithParam set a param that can be read by server side, like a query param in http requests, it does nothing if called after exec()
+func (r *RPC) WithParam(key string, value interface{}) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {
@@ -181,8 +181,8 @@ func (r *RPC) SetParam(key string, value interface{}) *RPC {
 	return r
 }
 
-// SetParams set params provided that can be read by server side, like a query param in http requests, it does nothing if called after exec()
-func (r *RPC) SetParams(params ...Param) *RPC {
+// WithParams set params provided that can be read by server side, like a query param in http requests, it does nothing if called after exec()
+func (r *RPC) WithParams(params ...Param) *RPC {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	if r.state != builderState {

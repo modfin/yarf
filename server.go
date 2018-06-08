@@ -13,7 +13,7 @@ type Server struct {
 	namespace          string
 	middleware         []Middleware
 	protocolSerializer Serializer
-	serializer         Serializer
+	contentSerializer  Serializer
 }
 
 // NewServer creates a new server with a particular server and name space of functions provided
@@ -26,7 +26,7 @@ func NewServer(t ListenTransporter, namespace ...string) Server {
 		s.namespace = ""
 	}
 	s.protocolSerializer = defaultSerializer()
-	s.serializer = defaultSerializer()
+	s.contentSerializer = defaultSerializer()
 	return s
 }
 
@@ -53,7 +53,7 @@ func (s *Server) WithProtocolSerializer(serializer Serializer) {
 
 // WithSerializer sets the default protocolSerializer for content.
 func (s *Server) WithSerializer(serializer Serializer) {
-	s.serializer = serializer
+	s.contentSerializer = serializer
 }
 
 // HandleFunc creates a server endpoint for yarf using the handler function, the name of function will be on the format "namespace.FunctionName"
@@ -74,7 +74,7 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
 		req := Msg{} // Automatically find deserializer
-		resp := Msg{protocolSerializer: s.protocolSerializer, serializer: s.serializer}
+		resp := Msg{protocolSerializer: s.protocolSerializer, contentSerializer: s.contentSerializer}
 
 		err := req.doUnmarshal(requestData)
 		if err != nil {

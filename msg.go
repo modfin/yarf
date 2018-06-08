@@ -40,7 +40,7 @@ const HeaderContentType = "content-type"
 type Msg struct {
 	ctx                context.Context
 	protocolSerializer Serializer
-	serializer         Serializer
+	contentSerializer  Serializer
 
 	builderError error
 
@@ -169,11 +169,11 @@ func (m *Msg) SetHeader(key string, value interface{}) *Msg {
 
 // SetContent sets the input interface as the content of the message
 func (m *Msg) SetContent(content interface{}) *Msg {
-	m.SetContentUsing(content, m.serializer)
+	m.SetContentUsing(content, m.contentSerializer)
 	return m
 }
 
-// SetContentUsing serializes the content with a specific serializer and sets it as a binary payload
+// SetContentUsing serializes the content with a specific contentSerializer and sets it as a binary payload
 func (m *Msg) SetContentUsing(content interface{}, serializer Serializer) *Msg {
 	var err error
 
@@ -191,7 +191,7 @@ func (m *Msg) SetContentUsing(content interface{}, serializer Serializer) *Msg {
 // SetBinaryContent sets the input data as content of the message
 func (m *Msg) SetBinaryContent(content []byte) *Msg {
 	m.Content = content
-	m.SetContentType("binary")
+	m.SetContentType("binary/octet-stream")
 	return m
 }
 
