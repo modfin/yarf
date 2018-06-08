@@ -30,6 +30,16 @@ func (m *Param) IsNil() bool {
 	return m.value == nil
 }
 
+// IsSlice returns true if value is a array
+func (m *Param) IsSlice() bool {
+
+	if m.value == nil {
+		return false
+	}
+
+	return reflect.TypeOf(m.value).Kind() == reflect.Slice
+}
+
 // String returns value as a string, if possible
 func (m *Param) String() (string, bool) {
 	if m.value == nil {
@@ -49,8 +59,8 @@ func (m *Param) StringOr(defaultTo string) string {
 	return defaultTo
 }
 
-// StringArr returns value as a []string, if possible
-func (m *Param) StringArr() ([]string, bool) {
+// StringSlice returns value as a []string, if possible
+func (m *Param) StringSlice() ([]string, bool) {
 	if m.value == nil {
 		return nil, false
 	}
@@ -58,29 +68,31 @@ func (m *Param) StringArr() ([]string, bool) {
 	var res []string
 	res, ok := m.value.([]string)
 	if ok {
-		return res, ok
+		return res, true
 	}
 
-	arr, ok := m.value.([]interface{})
-
-	if !ok {
-		return res, ok
+	if !m.IsSlice() {
+		return nil, false
 	}
+
+	slice := reflect.ValueOf(m.value)
+
+	res = make([]string, slice.Len())
 	ok = true
-	res = make([]string, len(arr))
-	for i, val := range arr {
+	for i := 0; i < slice.Len(); i++ {
 		var o bool
-		res[i], o = val.(string)
+		res[i], o = slice.Index(i).Interface().(string)
 		if !o {
-			ok = false
+			return nil, false
 		}
 	}
+
 	return res, ok
 }
 
-// StringArrOr returns value as a []string, otherwise the provided default
-func (m *Param) StringArrOr(defaultTo []string) []string {
-	arr, ok := m.StringArr()
+// StringSliceOr returns value as a []string, otherwise the provided default
+func (m *Param) StringSliceOr(defaultTo []string) []string {
+	arr, ok := m.StringSlice()
 
 	if ok {
 		return arr
@@ -102,7 +114,6 @@ func toInt(num interface{}) (int64, bool) {
 	var i int64
 	ok := false
 
-	// TODO maybe remove reflection
 	switch num.(type) {
 	case int, int8, int16, int32, int64:
 		a := reflect.ValueOf(num).Int() // a has type int64
@@ -160,8 +171,8 @@ func (m *Param) IntOr(def int64) int64 {
 	return def
 }
 
-// IntArr returns value as a []int64, if possible
-func (m *Param) IntArr() ([]int64, bool) {
+// IntSlice returns value as a []int64, if possible
+func (m *Param) IntSlice() ([]int64, bool) {
 	if m.value == nil {
 		return nil, false
 	}
@@ -172,28 +183,29 @@ func (m *Param) IntArr() ([]int64, bool) {
 		return res, ok
 	}
 
-	arr, ok := m.value.([]interface{})
-
-	if !ok {
-		return res, ok
+	if !m.IsSlice() {
+		return nil, false
 	}
 
-	res = make([]int64, len(arr))
+	slice := reflect.ValueOf(m.value)
+
+	res = make([]int64, slice.Len())
 	ok = true
-	for i, val := range arr {
+	for i := 0; i < slice.Len(); i++ {
 		var o bool
-		res[i], o = toInt(val)
+
+		res[i], o = toInt(slice.Index(i).Interface())
 		if !o {
-			ok = false
+			return nil, false
 		}
 	}
 
 	return res, ok
 }
 
-// IntArrOr returns value as a []int64, otherwise the provided default
-func (m *Param) IntArrOr(def []int64) []int64 {
-	arr, ok := m.IntArr()
+// IntSliceOr returns value as a []int64, otherwise the provided default
+func (m *Param) IntSliceOr(def []int64) []int64 {
+	arr, ok := m.IntSlice()
 
 	if ok {
 		return arr
@@ -219,8 +231,8 @@ func (m *Param) FloatOr(def float64) float64 {
 	return def
 }
 
-// FloatArr returns value as a []float64, if possible
-func (m *Param) FloatArr() ([]float64, bool) {
+// FloatSlice returns value as a []float64, if possible
+func (m *Param) FloatSlice() ([]float64, bool) {
 	if m.value == nil {
 		return nil, false
 	}
@@ -232,26 +244,29 @@ func (m *Param) FloatArr() ([]float64, bool) {
 		return res, ok
 	}
 
-	arr, ok := m.value.([]interface{})
-
-	if !ok {
-		return res, ok
+	if !m.IsSlice() {
+		return nil, false
 	}
-	res = make([]float64, len(arr))
+
+	slice := reflect.ValueOf(m.value)
+
+	res = make([]float64, slice.Len())
 	ok = true
-	for i, val := range arr {
+	for i := 0; i < slice.Len(); i++ {
 		var o bool
-		res[i], o = toFloat(val)
+
+		res[i], o = toFloat(slice.Index(i).Interface())
 		if !o {
-			ok = false
+			return nil, false
 		}
 	}
+
 	return res, ok
 }
 
-// FloatArrOr returns value as a []float64, otherwise the provided default
-func (m *Param) FloatArrOr(def []float64) []float64 {
-	arr, ok := m.FloatArr()
+// FloatSliceOr returns value as a []float64, otherwise the provided default
+func (m *Param) FloatSliceOr(def []float64) []float64 {
+	arr, ok := m.FloatSlice()
 
 	if ok {
 		return arr
@@ -278,8 +293,8 @@ func (m *Param) BoolOr(def bool) bool {
 	return def
 }
 
-// BoolArr returns value as a []bool, if possible
-func (m *Param) BoolArr() ([]bool, bool) {
+// BoolSlice returns value as a []bool, if possible
+func (m *Param) BoolSlice() ([]bool, bool) {
 	if m.value == nil {
 		return nil, false
 	}
@@ -291,26 +306,29 @@ func (m *Param) BoolArr() ([]bool, bool) {
 		return res, ok
 	}
 
-	arr, ok := m.value.([]interface{})
-
-	if !ok {
-		return res, ok
+	if !m.IsSlice() {
+		return nil, false
 	}
-	res = make([]bool, len(arr))
+
+	slice := reflect.ValueOf(m.value)
+
+	res = make([]bool, slice.Len())
 	ok = true
-	for i, val := range arr {
+	for i := 0; i < slice.Len(); i++ {
 		var o bool
-		res[i], o = val.(bool)
+
+		res[i], o = slice.Index(i).Interface().(bool)
 		if !o {
-			ok = false
+			return nil, false
 		}
 	}
+
 	return res, ok
 }
 
-// BoolArrOr returns value as a []bool, otherwise the provided default
-func (m *Param) BoolArrOr(def []bool) []bool {
-	arr, ok := m.BoolArr()
+// BoolSliceOr returns value as a []bool, otherwise the provided default
+func (m *Param) BoolSliceOr(def []bool) []bool {
+	arr, ok := m.BoolSlice()
 
 	if ok {
 		return arr

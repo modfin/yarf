@@ -73,7 +73,7 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 
 	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
-		req := Msg{}
+		req := Msg{} // Automatically find deserializer
 		resp := Msg{protocolSerializer: s.protocolSerializer, serializer: s.serializer}
 
 		err := req.doUnmarshal(requestData)

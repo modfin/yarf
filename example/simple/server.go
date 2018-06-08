@@ -88,7 +88,7 @@ func sum(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	print(" Got request sum")
 	arr := req.Param("arr")
 
-	v1, ok := arr.IntArr()
+	v1, ok := arr.IntSlice()
 	if !ok {
 		return errors.New("could arr not cast to []int64")
 	}
@@ -109,12 +109,12 @@ func xor(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	arr0 := req.Param("arr0")
 	arr1 := req.Param("arr1")
 
-	x, ok := arr0.BoolArr()
+	x, ok := arr0.BoolSlice()
 	if !ok {
 		return errors.New("could arr not cast to []bool")
 	}
 
-	y, ok := arr1.BoolArr()
+	y, ok := arr1.BoolSlice()
 	if !ok {
 		return errors.New("could arr not cast to []bool")
 	}
@@ -138,7 +138,7 @@ func sumFloat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	print(" Got request sum")
 	arr := req.Param("arr")
 
-	v1, ok := arr.FloatArr()
+	v1, ok := arr.FloatSlice()
 	if !ok {
 		return errors.New("could arr not cast to []float64")
 	}
@@ -158,7 +158,7 @@ func sumFloat32(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	print(" Got request sum")
 	arr := req.Param("arr")
 
-	v1, ok := arr.FloatArr()
+	v1, ok := arr.FloatSlice()
 	if !ok {
 		return errors.New("could arr not cast to []float64")
 	}
@@ -255,7 +255,7 @@ func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 	print(" Got request cat", reflect.TypeOf(req.Param("arr").Value()))
 
-	arr := req.Param("arr").StringArrOr([]string{"No", "Data"})
+	arr := req.Param("arr").StringSliceOr([]string{"No", "Data"})
 
 	res := ""
 	for _, item := range arr {

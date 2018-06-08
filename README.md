@@ -292,7 +292,8 @@ which can be regiserd by `import _ bitbucket.org/modfin/yarf/serializers` and we
     * Improving service discover on HTTP transport
         * Consul
         * etcd
-        * DNS
+        * DNS A
+        * DNS SRV
     * Improving loadbalancing on HTTP transport
     * Support for http2 and tls transport
 * Middlewares

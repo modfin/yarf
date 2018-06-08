@@ -61,7 +61,7 @@ func (c *Client) Request(function string) *RPC {
 		client:      c,
 		function:    function,
 		requestMsg:  &Msg{protocolSerializer: c.protocolSerializer, serializer: c.serializer},
-		responseMsg: &Msg{},
+		responseMsg: &Msg{}, // Automatically find deserializer
 		state:       builderState,
 		done:        make(chan bool),
 	}

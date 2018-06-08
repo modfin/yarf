@@ -296,7 +296,7 @@ func GetTestXOR(client yarf.Client, arr0 []bool, arr1 []bool, expected []bool) f
 			return
 		}
 
-		res, ok := msg.Param("res").BoolArr()
+		res, ok := msg.Param("res").BoolSlice()
 
 		if !ok {
 			t.Log("did not get an array")
