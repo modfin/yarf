@@ -148,6 +148,12 @@ var newParamSliceTable = []struct {
 		return
 	}},
 
+	{"uiunt", []int64{3, 93}, func(param Param) (ok bool, got interface{}, expected interface{}) {
+		expected = []uint64{3, 93}
+		got, ok = param.UintSlice()
+		return
+	}},
+
 	{"int", []int64{3, 93}, func(param Param) (ok bool, got interface{}, expected interface{}) {
 		expected = []int64{3, 93}
 		got, ok = param.IntSlice()
@@ -200,7 +206,7 @@ func TestNewSliceParam(t *testing.T) {
 
 		if f.extra != nil {
 			if ok, got, expected := f.extra(p); !ok || !reflect.DeepEqual(got, expected) {
-				t.Error("got", got, "expected", expected)
+				t.Error(p.key, "got", got, "expected", expected)
 			}
 		}
 	}

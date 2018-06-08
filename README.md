@@ -167,7 +167,8 @@ e.g. simple time logging
 		err := next() // Running other middleware and request to server
 
 		// Runs after client request
-        fmt.Println("Request took", time.Now().Sub(start))
+		elapsed := time.Now().Sub(start)
+        fmt.Println("Request to function", request.Function(), "took", elapsed)
 
 		return err
 	}
@@ -182,7 +183,8 @@ e.g. a simple server side caching
 
 		key, ok := request.Param("cachekey").String()
 		if !ok {
-		    return errors.New("could not find cachekey in message")
+		   // could not find cachekey in message, runs anyway
+		   return next()
 		}
 
 		b, found := getCachedItem(key)
