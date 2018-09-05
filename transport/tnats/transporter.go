@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/nats-io/go-nats"
 	"time"
+	"strings"
 )
 
 // NatsTransporter implements the yarf.Transport for using Nats
@@ -89,8 +90,18 @@ func (n *NatsTransporter) Call(ctx context.Context, function string, requestData
 
 // Listen defines the function that will handle yarf requests
 func (n *NatsTransporter) Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) error {
+
+	queueGroup := function
+	parts := strings.Split(function, ".")
+	if len(parts) > 1 {
+		serverNamespaces := parts[:len(parts)-1]
+		queueGroup = strings.Join(serverNamespaces, ".")
+	}
+
 	function = n.namespace + function
-	_, err := n.client.Subscribe(function, func(m *nats.Msg) {
+	queueGroup = n.namespace + queueGroup
+
+	_, err := n.client.QueueSubscribe(function, queueGroup, func(m *nats.Msg) {
 
 		com := n.fromMessage(m)
 
@@ -99,7 +110,7 @@ func (n *NatsTransporter) Listen(function string, toExec func(ctx context.Contex
 
 		requestData, err := com.receive(ctx)
 		if err != nil {
-			fmt.Println("Could not recive ", err)
+			fmt.Println("Could not receive ", err)
 			return
 		}
 
