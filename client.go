@@ -257,6 +257,10 @@ func (r *RPC) exec() *RPCTransit {
 
 		r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
 
+		if r.err == nil{
+			r.err = r.doBind(r.requestMsg, r.responseMsg)
+		}
+
 		r.setState(responseState)
 
 		if r.err != nil {
@@ -275,6 +279,21 @@ func (r *RPC) exec() *RPCTransit {
 
 	return &RPCTransit{r}
 }
+
+func (r *RPC) doBind(request *Msg, response *Msg) error{
+	if s, ok := response.Status(); s >= 500 && ok {
+		err := RPCError{}
+		response.BindContent(&err)
+		return err
+	}
+
+	if r.responseMsgContent != nil {
+		err := response.BindContent(r.responseMsgContent)
+		return err
+	}
+	return nil
+}
+
 
 func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 	return func(request *Msg, response *Msg) error {
@@ -295,17 +314,6 @@ func toClientRequestHandler(r *RPC) func(request *Msg, response *Msg) error {
 
 		err = response.doUnmarshal(respBytes)
 		if err != nil {
-			return err
-		}
-
-		if s, ok := response.Status(); s >= 500 && ok {
-			err := RPCError{}
-			response.BindContent(&err)
-			return err
-		}
-
-		if r.responseMsgContent != nil {
-			err = response.BindContent(r.responseMsgContent)
 			return err
 		}
 
