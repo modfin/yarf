@@ -38,6 +38,7 @@ func GetIntegrationTest(client yarf.Client) func(t *testing.T) {
 		t.Run("ObservedAdd", GetTestObservedAdd(client, 5, 7, 3))
 		t.Run("Sub", GetTestSub(client, 33, 11))
 		t.Run("Swap", GetTestSwap(client, simple.Tuple{Val1: 1, Val2: 2}, 3))
+		t.Run("Conc", GetTestConc(client, 25))
 		t.Run("SwapWithSerializer", GetTestSwapWithSerlizer(client, simple.Tuple{Val1: 1, Val2: 2}))
 	}
 }
@@ -524,5 +525,19 @@ func GetTestCopy(client yarf.Client, length int) func(t *testing.T) {
 			t.Fail()
 		}
 
+	}
+}
+
+
+// GetTestCopy generates a large request/response payload test for a specific client
+func GetTestConc(client yarf.Client, sleep int) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := simple.ConcRequest(client, sleep)
+
+		if err != nil {
+			t.Log("Got err", err)
+			t.Fail()
+			return
+		}
 	}
 }

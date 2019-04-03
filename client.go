@@ -283,7 +283,7 @@ func (r *RPC) exec() *RPCTransit {
 func (r *RPC) doBind(request *Msg, response *Msg) error{
 	if s, ok := response.Status(); s >= 500 && ok {
 		err := RPCError{}
-		response.BindContent(&err)
+		_ = response.BindContent(&err)
 		return err
 	}
 

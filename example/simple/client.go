@@ -342,6 +342,48 @@ func CopyRequest(client yarf.Client, len int) (*yarf.Msg, error) {
 		Get()
 }
 
+
+
+// GenRequest generates an empty array of len
+func ConcRequest(client yarf.Client, sleep int) error {
+
+	start := time.Now()
+	m1, err1 := client.Request("a.integration.sleep").
+		WithParam("sleep", sleep).
+		Channels()
+
+	m2, err2 := client.Request("a.integration.sleep").
+		WithParam("sleep", sleep).
+		Channels()
+
+	st1 := time.Now()
+	var err  error
+	for i := 0; i < 2; i++ {
+		select {
+		case <-m1:
+		case <-m2:
+		case err = <-err1:
+			break
+		case err = <-err2:
+			break
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	dur := time.Now().Sub(start)
+
+	if dur > time.Duration(sleep*2)*time.Millisecond {
+		err = fmt.Errorf("request did not occure concurrently, should have taken about %dms, took %s, st1 took %s", sleep, dur, st1.Sub(start))
+	}
+
+	return err
+}
+
+
+
 // RunClient uses provided transport interface to run some tests
 func RunClient(clientTransport yarf.Transporter) {
 

@@ -35,18 +35,17 @@ type DiscoveryDNSA struct {
 
 	Resolv string
 
-	lock    sync.Mutex
-	pos     int
-	ips     []string
-	expires int64
+	lock       sync.Mutex
+	updatelock sync.Mutex
+	pos        int
+	ips        []string
+	expires    int64
 }
 
 func (d *DiscoveryDNSA) refresh() {
 
-	d.lock.Lock()
-	defer func() {
-		d.lock.Unlock()
-	}()
+	d.updatelock.Lock()
+	defer d.updatelock.Unlock()
 
 	config, err := dns.ClientConfigFromFile(stringOr(d.Resolv, "/etc/resolv.conf"))
 	if err != nil {
@@ -99,6 +98,9 @@ func (d *DiscoveryDNSA) refresh() {
 
 // URL implements the Discovery interface
 func (d *DiscoveryDNSA) URL() (string, error) {
+
+	d.lock.Lock()
+	defer d.lock.Unlock()
 
 	if len(d.ips) == 0 || time.Now().Unix() > d.expires {
 		//fmt.Println("Refreshing", d.ips)

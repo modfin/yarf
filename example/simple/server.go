@@ -44,7 +44,7 @@ func sleep(req *yarf.Msg, resp *yarf.Msg) (err error) {
 		return ctx.Err()
 	}
 
-	fmt.Println(ctx.Err())
+	//fmt.Println(ctx.Err())
 
 	resp.SetParam("res", ms)
 

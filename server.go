@@ -71,7 +71,7 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 		function = s.namespace + "." + function
 	}
 
-	s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
+	_ = s.transporter.Listen(function, func(ctx context.Context, requestData []byte) (responseData []byte) {
 
 		req := Msg{} // Automatically find deserializer
 		resp := Msg{protocolSerializer: s.protocolSerializer, contentSerializer: s.contentSerializer}
