@@ -2,7 +2,7 @@ package yarf
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"sync"
 )
 
@@ -229,7 +229,7 @@ func (r *RPC) exec() *RPCTransit {
 	r.requestMsg.SetHeader(HeaderFunction, r.function)
 
 	if suuid, ok := r.requestMsg.UUID(); suuid == "" || !ok {
-		v4, _ := uuid.NewV4()
+		v4 := uuid.New()
 		r.requestMsg.SetHeader(HeaderUUID, v4.String())
 	}
 
