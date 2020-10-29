@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/example/simple"
 	"github.com/modfin/yarf/middleware"
-	"github.com/modfin/yarf/serializers/msgpack"
 	"github.com/modfin/yarf/transport/thttp"
 	"fmt"
 	"github.com/opentracing/basictracer-go/examples/dapperish"
@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	simple.StartServerWithSerializer(serverTransport, true, msgpack.Serializer(), middleware.OpenTracing("Server> "))
+	simple.StartServerWithSerializer(serverTransport, true, yarf.MsgPackSerializer(), middleware.OpenTracing("Server> "))
 	go serverTransport.Start()
 
 	time.Sleep(200 * time.Millisecond)

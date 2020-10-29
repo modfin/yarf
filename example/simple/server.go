@@ -3,8 +3,6 @@ package simple
 import (
 	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/middleware"
-	"github.com/modfin/yarf/serializers/jsoniterator"
-	"github.com/modfin/yarf/serializers/msgpack"
 	"context"
 	hashing "crypto/sha256"
 	"encoding/base64"
@@ -246,7 +244,7 @@ func swapWithSerializer(req *yarf.Msg, resp *yarf.Msg) (err error) {
 	tmp := t.Val1
 	t.Val1 = t.Val2
 	t.Val2 = tmp
-	resp.SetContentUsing(t, jsoniterator.Serializer())
+	resp.SetContentUsing(t, yarf.SerializerJson())
 
 	return
 }
@@ -269,7 +267,7 @@ func cat(req *yarf.Msg, resp *yarf.Msg) (err error) {
 
 // StartServer starts a integration server using provided yarf transport
 func StartServer(serverTransport yarf.Transporter, verbose bool) {
-	StartServerWithSerializer(serverTransport, verbose, msgpack.Serializer())
+	StartServerWithSerializer(serverTransport, verbose, yarf.SerializerJson())
 }
 
 // StartServerWithSerializer starts a integration server using provided yarf transport and a specific Serializer

@@ -3,7 +3,6 @@ package simple
 import (
 	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/middleware"
-	"github.com/modfin/yarf/serializers/jsoniterator"
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
@@ -314,7 +313,7 @@ func SwapAndMultiplyRequest(client yarf.Client, tuple Tuple, multiplier int) (re
 // SwapWithSerializer swap places on values in tuple
 func SwapWithSerializer(client yarf.Client, tuple Tuple) (res Tuple, err error) {
 	return res, client.Request("a.integration.swapWithSerializer").
-		WithContentUsing(tuple, jsoniterator.Serializer()).
+		WithContentUsing(tuple, yarf.SerializerJson()).
 		BindResponseContent(&res).
 		Done()
 }

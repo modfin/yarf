@@ -2,11 +2,8 @@ package integration
 
 import (
 	"github.com/modfin/yarf"
-	_ "github.com/modfin/yarf/serializers"
-	"github.com/modfin/yarf/serializers/msgpack"
 	"testing"
 
-	"github.com/modfin/yarf/serializers/jsoniterator"
 )
 
 var transportTable = []struct {
@@ -22,9 +19,8 @@ var serializerTable = []struct {
 	name       string
 	serializer yarf.Serializer
 }{
-	{"MSG_PACK", msgpack.Serializer()},
-	//{"JSON", json.Serializer()},
-	{"JSON_ITERATOR", jsoniterator.Serializer()},
+	{"MSG_PACK", yarf.MsgPackSerializer()},
+	{"JSON_ITERATOR", yarf.SerializerJson()},
 }
 
 func TestMatrix(t *testing.T) {
