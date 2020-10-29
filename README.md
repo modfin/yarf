@@ -318,9 +318,7 @@ Serlizations can be done in different combinations and independet of each other.
 The default is **msgpack** for both but can be changed per client, server or message basis.
 Since it is might be hard to track what server has what and so on, serializers can
 be regiserd in yarf by `yarf.RegisterSerializer(serializer)`. Yarf also provde some
-extras ones, msgpack and json, which can be regiserd by
-`import _ github.com/modfin/yarf/serializers` and we think this should
-cover most needs.
+extras ones, msgpack and json
 
 
 
