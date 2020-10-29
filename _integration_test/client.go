@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/example/simple"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/example/simple"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"

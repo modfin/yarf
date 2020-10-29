@@ -1,10 +1,10 @@
 package integration
 
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/example/simple"
-	"bitbucket.org/modfin/yarf/transport/thttp"
-	"bitbucket.org/modfin/yarf/transport/tnats"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/example/simple"
+	"github.com/modfin/yarf/transport/thttp"
+	"github.com/modfin/yarf/transport/tnats"
 	"fmt"
 	"os"
 	"time"

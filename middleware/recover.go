@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 	"fmt"
 )
 

@@ -1,7 +1,7 @@
 package msgpack
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 	pack "github.com/vmihailenco/msgpack"
 )
 

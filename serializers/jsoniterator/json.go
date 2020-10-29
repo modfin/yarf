@@ -1,7 +1,7 @@
 package jsoniterator
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 	j "github.com/json-iterator/go"
 )
 

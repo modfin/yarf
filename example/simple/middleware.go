@@ -1,7 +1,7 @@
 package simple
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 )
 
 func setValsMiddleware(i, j int) func(request *yarf.Msg, response *yarf.Msg, next yarf.NextMiddleware) error {

@@ -1,10 +1,10 @@
 package simple
 
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
-	"bitbucket.org/modfin/yarf/serializers/msgpack"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/middleware"
+	"github.com/modfin/yarf/serializers/jsoniterator"
+	"github.com/modfin/yarf/serializers/msgpack"
 	"context"
 	hashing "crypto/sha256"
 	"encoding/base64"

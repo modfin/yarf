@@ -1,5 +1,5 @@
-[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/bitbucket.org/modfin/yarf)
-[![Go Report Card](https://goreportcard.com/badge/bitbucket.org/modfin/yarf)](https://goreportcard.com/report/bitbucket.org/modfin/yarf)
+[![GoDoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/modfin/yarf)
+[![Go Report Card](https://goreportcard.com/badge/github.com/modfin/yarf)](https://goreportcard.com/report/github.com/modfin/yarf)
 [![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://raw.githubusercontent.com/labstack/echo/master/LICENSE)
 
 
@@ -47,16 +47,16 @@ See examples for more examples/simple
 
 ### Intallation
 ```
-go get bitbucket.org/modfin/yarf
-go get bitbucket.org/modfin/yarf/...
+go get github.com/modfin/yarf
+go get github.com/modfin/yarf/...
 ```
 
 ### Server
 ```go
 package main
 import (
-    "bitbucket.org/modfin/yarf"
-    "bitbucket.org/modfin/yarf/transport/thttp"
+    "github.com/modfin/yarf"
+    "github.com/modfin/yarf/transport/thttp"
     "log"
 )
 
@@ -110,8 +110,8 @@ func main(){
 ```go
 package main
 import (
-    "bitbucket.org/modfin/yarf"
-    "bitbucket.org/modfin/yarf/transport/thttp"
+    "github.com/modfin/yarf"
+    "github.com/modfin/yarf/transport/thttp"
     "log"
     "fmt"
 )
@@ -319,7 +319,7 @@ The default is **msgpack** for both but can be changed per client, server or mes
 Since it is might be hard to track what server has what and so on, serializers can
 be regiserd in yarf by `yarf.RegisterSerializer(serializer)`. Yarf also provde some
 extras ones, msgpack and json, which can be regiserd by
-`import _ bitbucket.org/modfin/yarf/serializers` and we think this should
+`import _ github.com/modfin/yarf/serializers` and we think this should
 cover most needs.
 
 

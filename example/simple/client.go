@@ -1,9 +1,9 @@
 package simple
 
 import (
-	"bitbucket.org/modfin/yarf"
-	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/middleware"
+	"github.com/modfin/yarf/serializers/jsoniterator"
 	"context"
 	"fmt"
 	"github.com/pkg/errors"

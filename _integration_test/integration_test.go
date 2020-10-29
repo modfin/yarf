@@ -1,12 +1,12 @@
 package integration
 
 import (
-	"bitbucket.org/modfin/yarf"
-	_ "bitbucket.org/modfin/yarf/serializers"
-	"bitbucket.org/modfin/yarf/serializers/msgpack"
+	"github.com/modfin/yarf"
+	_ "github.com/modfin/yarf/serializers"
+	"github.com/modfin/yarf/serializers/msgpack"
 	"testing"
 
-	"bitbucket.org/modfin/yarf/serializers/jsoniterator"
+	"github.com/modfin/yarf/serializers/jsoniterator"
 )
 
 var transportTable = []struct {

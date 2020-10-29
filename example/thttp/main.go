@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bitbucket.org/modfin/yarf/example/simple"
-	"bitbucket.org/modfin/yarf/middleware"
-	"bitbucket.org/modfin/yarf/serializers/msgpack"
-	"bitbucket.org/modfin/yarf/transport/thttp"
+	"github.com/modfin/yarf/example/simple"
+	"github.com/modfin/yarf/middleware"
+	"github.com/modfin/yarf/serializers/msgpack"
+	"github.com/modfin/yarf/transport/thttp"
 	"fmt"
 	"github.com/opentracing/basictracer-go/examples/dapperish"
 	"github.com/opentracing/opentracing-go"

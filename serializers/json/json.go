@@ -1,7 +1,7 @@
 package json
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 	j "encoding/json"
 )
 

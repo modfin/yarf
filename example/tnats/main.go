@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bitbucket.org/modfin/yarf/example/simple"
-	"bitbucket.org/modfin/yarf/transport/tnats"
+	"github.com/modfin/yarf/example/simple"
+	"github.com/modfin/yarf/transport/tnats"
 	"fmt"
 	"log"
 	"time"

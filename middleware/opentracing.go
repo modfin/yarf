@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"bitbucket.org/modfin/yarf"
+	"github.com/modfin/yarf"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"time"
