@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/modfin/yarf/example/simple"
 	"github.com/modfin/yarf/transport/tnats"
-	"fmt"
 	"log"
 	"time"
 )

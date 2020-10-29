@@ -1,13 +1,13 @@
 package simple
 
 import (
-	"github.com/modfin/yarf"
-	"github.com/modfin/yarf/middleware"
 	"context"
 	hashing "crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/middleware"
 	"reflect"
 	"time"
 )

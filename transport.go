@@ -36,8 +36,6 @@ type Serializer struct {
 
 var serializers map[string]Serializer
 
-
-
 // RegisterSerializer lets a user register a protocolSerializer for a specific content type
 // this allow yarf to bind message content to that specific serial format.
 // Yarf standard serializers can be registered by importing with side effect

@@ -1,12 +1,12 @@
 package integration
 
 import (
-	"github.com/modfin/yarf"
-	"github.com/modfin/yarf/example/simple"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/example/simple"
 	"strings"
 	"testing"
 	"time"

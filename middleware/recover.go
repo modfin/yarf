@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/modfin/yarf"
 	"fmt"
+	"github.com/modfin/yarf"
 )
 
 // Recover recovers from panic and converts it to an error.

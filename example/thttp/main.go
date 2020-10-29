@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/example/simple"
 	"github.com/modfin/yarf/middleware"
 	"github.com/modfin/yarf/transport/thttp"
-	"fmt"
 	"github.com/opentracing/basictracer-go/examples/dapperish"
 	"github.com/opentracing/opentracing-go"
 	"os"

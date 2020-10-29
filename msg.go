@@ -202,8 +202,8 @@ func (m *Msg) Context() context.Context {
 
 // WithContext sets the context of the message. The supplied context will replace the current one. If wrapping is intended get the current context first using Context
 func (m *Msg) WithContext(ctx context.Context) *Msg {
-  m.ctx = ctx
-  return m
+	m.ctx = ctx
+	return m
 }
 
 // SetParam sets a param in the params header of the message. Which later provides helper methods of de/serializations and defaults.

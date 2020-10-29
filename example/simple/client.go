@@ -1,10 +1,10 @@
 package simple
 
 import (
-	"github.com/modfin/yarf"
-	"github.com/modfin/yarf/middleware"
 	"context"
 	"fmt"
+	"github.com/modfin/yarf"
+	"github.com/modfin/yarf/middleware"
 	"github.com/pkg/errors"
 	"log"
 	"time"

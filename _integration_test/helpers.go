@@ -1,11 +1,11 @@
 package integration
 
 import (
+	"fmt"
 	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/example/simple"
 	"github.com/modfin/yarf/transport/thttp"
 	"github.com/modfin/yarf/transport/tnats"
-	"fmt"
 	"os"
 	"time"
 )
