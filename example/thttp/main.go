@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	simple.StartServerWithSerializer(serverTransport, true, yarf.MsgPackSerializer(), middleware.OpenTracing("Server> "))
+	simple.StartServerWithSerializer(serverTransport, true, yarf.SerializerMsgPack(), middleware.OpenTracing("Server> "))
 	go serverTransport.Start()
 
 	time.Sleep(200 * time.Millisecond)

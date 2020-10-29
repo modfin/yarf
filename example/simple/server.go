@@ -271,7 +271,7 @@ func StartServer(serverTransport yarf.Transporter, verbose bool) {
 }
 
 // StartServerWithSerializer starts a integration server using provided yarf transport and a specific Serializer
-func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, serializer yarf.Serializer, midware ...yarf.Middleware) {
+func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, serializer yarf.Serializer, midware ...yarf.Middleware) yarf.Server {
 	doPrint = verbose
 
 	print("Creating server")
@@ -350,4 +350,5 @@ func StartServerWithSerializer(serverTransport yarf.Transporter, verbose bool, s
 		return nil
 	})
 
+	return server
 }

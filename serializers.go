@@ -19,7 +19,7 @@ func SerializerJson() Serializer {
 }
 
 //Serializer is for encoding and decoding to msgpack
-func MsgPackSerializer() Serializer {
+func SerializerMsgPack() Serializer {
 	return Serializer{
 		ContentType: "application/msgpack",
 		Marshal:     func(v interface{}) ([]byte, error) { return msgpack.Marshal(v) },

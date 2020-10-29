@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -26,6 +27,9 @@ type HTTPTransporter struct {
 	initServer sync.Once
 	server     *http.Server
 	mux        *http.ServeMux
+
+	mu sync.Mutex
+	closed chan struct{}
 }
 
 // Options defines the options used by the http yarf transport
@@ -52,6 +56,7 @@ func NewHTTPTransporter(options Options) (*HTTPTransporter, error) {
 	t := HTTPTransporter{
 		options: options,
 		mux:     http.NewServeMux(),
+		closed:  make(chan struct{}),
 	}
 
 	return &t, nil
@@ -59,6 +64,10 @@ func NewHTTPTransporter(options Options) (*HTTPTransporter, error) {
 
 // Call implements client side call of transporter
 func (h *HTTPTransporter) Call(ctx context.Context, function string, requestData []byte) (response []byte, err error) {
+
+	if h.IsClose() {
+		return nil, errors.New("transport layer is has been closed")
+	}
 
 	url, err := h.options.Discovery.URL()
 
@@ -99,10 +108,41 @@ func (h *HTTPTransporter) Start() error {
 	return h.server.ListenAndServe()
 }
 
+
+func (h *HTTPTransporter) IsClose() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	select {
+	case <-h.closed:
+		return true
+	default:
+		return false
+	}
+}
 // Close halts the http server to receive requests
 func (h *HTTPTransporter) Close() error {
+	h.mu.Lock()
+	select {
+	case <-h.closed:
+	default:
+		close(h.closed)
+	}
+	h.mu.Unlock()
 	return h.server.Shutdown(context.Background())
 }
+func (h *HTTPTransporter) CloseGraceful(timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	h.mu.Lock()
+	select {
+	case <-h.closed:
+	default:
+		close(h.closed)
+	}
+	h.mu.Unlock()
+	return h.server.Shutdown(ctx)
+}
+
 
 // Listen defines the function that will handle yarf requests
 func (h *HTTPTransporter) Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) (err error) {

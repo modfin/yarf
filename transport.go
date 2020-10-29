@@ -2,29 +2,21 @@ package yarf
 
 import (
 	"context"
+	"time"
 )
 
 func init() {
 	serializers = map[string]Serializer{}
 	RegisterSerializer(SerializerJson())
-	RegisterSerializer(MsgPackSerializer())
+	RegisterSerializer(SerializerMsgPack())
 }
 
 // Transporter is the interface that must be fulfilled for a transporter.
 type Transporter interface {
-	CallTransporter
-	ListenTransporter
-}
-
-// CallTransporter is the interface that must be fulfilled for a transporter to be used as a client.
-type CallTransporter interface {
 	Call(ctx context.Context, function string, requestData []byte) (response []byte, err error)
-}
-
-// ListenTransporter is the interface that must be fulfilled for a transporter to be used as a server
-type ListenTransporter interface {
 	Listen(function string, toExec func(ctx context.Context, requestData []byte) (responseData []byte)) error
 	Close() error
+	CloseGraceful(timeout time.Duration) error
 }
 
 // Serializer is the interface that must be fulfilled for protocolSerializer of data before transport.
@@ -49,5 +41,5 @@ func serializer(contentType string) (serializer Serializer, ok bool) {
 }
 
 func defaultSerializer() Serializer {
-	return MsgPackSerializer()
+	return SerializerMsgPack()
 }

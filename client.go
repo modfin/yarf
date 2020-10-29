@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"sync"
+	"time"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 )
 
 // NewClient create a new yarf client using a specific transporter
-func NewClient(t CallTransporter) Client {
+func NewClient(t Transporter) Client {
 	s := Client{}
 	s.transporter = t
 	s.protocolSerializer = defaultSerializer()
@@ -25,10 +26,18 @@ func NewClient(t CallTransporter) Client {
 
 // Client is a struct wrapping a transporting layer and methods for using yarf
 type Client struct {
-	transporter        CallTransporter
+	transporter        Transporter
 	middleware         []Middleware
 	protocolSerializer Serializer
 	contentSerializer  Serializer
+}
+
+// Close
+func (c *Client) Close() error {
+	return c.transporter.Close()
+}
+func (c *Client) CloseGraceful(timeout time.Duration) error {
+	return c.transporter.CloseGraceful(timeout)
 }
 
 // WithMiddleware adds middleware to client request for pre and post processing
@@ -95,9 +104,10 @@ type RPC struct {
 	msgChannel   chan *Msg
 	errorChannel chan error
 
-	err    error
-	done   chan bool
-	isDone bool
+	err      error
+	execOnce sync.Once
+	done     chan bool
+	isDone   bool
 }
 
 // WithContent sets requests content, it does nothing if called after exec()
@@ -232,50 +242,51 @@ func (r *RPC) exec() *RPCTransit {
 		v4 := uuid.New()
 		r.requestMsg.SetHeader(HeaderUUID, v4.String())
 	}
+	r.execOnce.Do(func() {
+		go func() {
+			r.mutex.Lock()
+			defer r.mutex.Unlock()
+			defer func() {
+				if r.err != nil {
+					if r.errorChannel != nil {
+						r.errorChannel <- r.err
+					}
 
-	go func() {
-		r.mutex.Lock()
-		defer r.mutex.Unlock()
-		defer func() {
-			if r.err != nil {
-				if r.errorChannel != nil {
-					r.errorChannel <- r.err
+					if r.errorCallback != nil {
+						r.errorCallback(r.err)
+					}
 				}
+				cancel()
+				r.done <- true
+				close(r.done)
 
-				if r.errorCallback != nil {
-					r.errorCallback(r.err)
-				}
+				r.setState(finishedState)
+			}()
+
+			r.setState(requestState)
+
+			r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
+
+			if r.err == nil {
+				r.err = r.doBind(r.requestMsg, r.responseMsg)
 			}
-			cancel()
-			r.done <- true
-			close(r.done)
 
-			r.setState(finishedState)
+			r.setState(responseState)
+
+			if r.err != nil {
+				return
+			}
+
+			if r.msgChannel != nil {
+				r.msgChannel <- r.responseMsg
+			}
+
+			if r.msgCallback != nil {
+				r.msgCallback(r.responseMsg)
+			}
+
 		}()
-
-		r.setState(requestState)
-
-		r.err = processMiddleware(r.requestMsg, r.responseMsg, toClientRequestHandler(r), append(r.client.middleware, r.middleware...)...)
-
-		if r.err == nil {
-			r.err = r.doBind(r.requestMsg, r.responseMsg)
-		}
-
-		r.setState(responseState)
-
-		if r.err != nil {
-			return
-		}
-
-		if r.msgChannel != nil {
-			r.msgChannel <- r.responseMsg
-		}
-
-		if r.msgCallback != nil {
-			r.msgCallback(r.responseMsg)
-		}
-
-	}()
+	})
 
 	return &RPCTransit{r}
 }

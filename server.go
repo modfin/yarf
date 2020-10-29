@@ -5,11 +5,12 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // Server represents a yarf server with a particular transporter
 type Server struct {
-	transporter        ListenTransporter
+	transporter        Transporter
 	namespace          string
 	middleware         []Middleware
 	protocolSerializer Serializer
@@ -17,7 +18,7 @@ type Server struct {
 }
 
 // NewServer creates a new server with a particular server and name space of functions provided
-func NewServer(t ListenTransporter, namespace ...string) Server {
+func NewServer(t Transporter, namespace ...string) Server {
 	s := Server{}
 	s.transporter = t
 	if len(namespace) > 0 {
@@ -103,4 +104,12 @@ func (s *Server) Handle(function string, handler func(request *Msg, response *Ms
 
 		return responseData
 	})
+}
+
+// Close will close the underlying transport layer
+func (s *Server) Close() error {
+	return s.transporter.Close()
+}
+func (s *Server) CloseGraceful(timeout time.Duration) error {
+	return s.transporter.CloseGraceful(timeout)
 }

@@ -64,8 +64,7 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 	contentlen := -1
 
 	for i := 0; i < 100 && i < len(data); i++ {
-
-		if data[i] == 10 { // "\n"
+		if data[i] == '\n' {
 			contentlen = i
 			break
 		}
@@ -75,7 +74,7 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 		return errors.New("Could not find content type")
 	}
 
-	contentType := string(data[:contentlen])
+	contentType, data := string(data[:contentlen]), data[contentlen+1:]
 
 	ser, ok := serializer(contentType)
 
@@ -83,7 +82,7 @@ func (m *Msg) doUnmarshal(data []byte) (err error) {
 		return errors.New("could not find a suitable protocolSerializer")
 	}
 
-	err = ser.Unmarshal(data[contentlen+1:], m)
+	err = ser.Unmarshal(data, m)
 	return
 }
 
