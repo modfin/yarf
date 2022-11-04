@@ -3,7 +3,7 @@ package tnats
 import (
 	"context"
 	"fmt"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nuid"
 )
 
