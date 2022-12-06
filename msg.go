@@ -2,8 +2,8 @@ package yarf
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 // StatusOk rpc status ok

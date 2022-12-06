@@ -1,26 +1,29 @@
 module github.com/modfin/yarf
 
+go 1.19
+
 require (
-	github.com/golang-plus/errors v1.0.0
-	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/google/uuid v1.1.1
-	github.com/json-iterator/go v1.1.6
-	github.com/miekg/dns v1.1.8
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/nats-io/gnatsd v1.4.1 // indirect
-	github.com/nats-io/go-nats v1.7.2
-	github.com/nats-io/nkeys v0.0.2 // indirect
-	github.com/nats-io/nuid v1.0.0
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/google/uuid v1.3.0
+	github.com/json-iterator/go v1.1.12
+	github.com/miekg/dns v1.1.50
+	github.com/nats-io/nats.go v1.21.0
+	github.com/nats-io/nuid v1.0.1
 	github.com/opentracing/basictracer-go v1.1.0
-	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.1
-	github.com/stretchr/testify v1.6.1 // indirect
-	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	github.com/opentracing/opentracing-go v1.2.0
+	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
-go 1.13
+require (
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nats-io/nats-server/v2 v2.9.8 // indirect
+	github.com/nats-io/nkeys v0.3.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
+)

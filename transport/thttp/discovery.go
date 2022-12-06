@@ -1,8 +1,8 @@
 package thttp
 
 import (
+	"errors"
 	"fmt"
-	"github.com/golang-plus/errors"
 	"github.com/miekg/dns"
 	"math/rand"
 	"net"

@@ -2,7 +2,7 @@ package yarf
 
 import (
 	j "github.com/json-iterator/go"
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 //Serializer is for encoding and decoding to json

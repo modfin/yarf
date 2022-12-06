@@ -2,10 +2,10 @@ package simple
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/modfin/yarf"
 	"github.com/modfin/yarf/middleware"
-	"github.com/pkg/errors"
 	"log"
 	"time"
 )
@@ -356,7 +356,7 @@ func ConcRequest(client yarf.Client, sleep int) error {
 		Channels()
 
 	st1 := time.Now()
-	var err  error
+	var err error
 	for i := 0; i < 2; i++ {
 		select {
 		case <-m1:
